@@ -1,0 +1,143 @@
+<div class="login-page">
+  <div class="login-container">
+    <!-- Login Form -->
+    <div class="form-container fade-in-up">
+      <div class="form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your account to continue learning</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Email Field -->
+        <mat-form-field appearance="outline">
+          <mat-label>Email Address</mat-label>
+          <input 
+            matInput 
+            type="email"
+            formControlName="email"
+            placeholder="Enter your email"
+            autocomplete="email">
+          <mat-icon matPrefix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
+            {{getErrorMessage('email')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Password Field -->
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input 
+            matInput 
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Enter your password"
+            autocomplete="current-password">
+          <mat-icon matPrefix>lock</mat-icon>
+          <button 
+            mat-icon-button 
+            matSuffix 
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+            {{getErrorMessage('password')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Submit Button -->
+        <button 
+          mat-raised-button 
+          type="submit"
+          class="btn-gradient submit-btn"
+          [disabled]="isLoading">
+          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+          <mat-icon *ngIf="!isLoading">login</mat-icon>
+          <span>{{isLoading ? 'Signing In...' : 'Sign In'}}</span>
+        </button>
+
+        <!-- Register Link -->
+        <div class="form-footer">
+          <p>
+            Don't have an account? 
+            <a routerLink="/auth/register" class="register-link">Sign up here</a>
+          </p>
+        </div>
+      </form>
+
+      <mat-divider class="divider">
+        <span class="divider-text">OR</span>
+      </mat-divider>
+
+      <!-- Demo Accounts Section -->
+      <div class="demo-section">
+        <h3>Try Demo Accounts</h3>
+        <p class="demo-description">Click any button below to quickly sign in and explore the app</p>
+        
+        <div class="demo-accounts">
+          <button 
+            mat-raised-button 
+            *ngFor="let account of demoAccounts"
+            (click)="useDemoAccount(account.email, account.password)"
+            class="demo-btn"
+            [class]="'demo-' + account.role.toLowerCase()"
+            [disabled]="isLoading">
+            <div class="demo-btn-content">
+              <mat-icon>{{account.role === 'Admin' ? 'admin_panel_settings' : 'school'}}</mat-icon>
+              <div class="demo-btn-text">
+                <span class="demo-role">{{account.role}} Demo</span>
+                <span class="demo-email">{{account.email}}</span>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Information -->
+    <div class="info-panel fade-in-up">
+      <div class="info-content">
+        <div class="info-header">
+          <mat-icon class="info-icon">school</mat-icon>
+          <h3>CourseHub Learning Platform</h3>
+        </div>
+        
+        <div class="features-list">
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Access thousands of expert-led courses</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Learn at your own pace</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Earn certificates upon completion</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Join a community of learners</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <h4>50K+</h4>
+            <p>Students</p>
+          </div>
+          <div class="stat">
+            <h4>1000+</h4>
+            <p>Courses</p>
+          </div>
+          <div class="stat">
+            <h4>4.8/5</h4>
+            <p>Rating</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

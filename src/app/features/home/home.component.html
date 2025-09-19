@@ -1,0 +1,183 @@
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-content">
+    <div class="container">
+      <div class="hero-text fade-in-up">
+        <h1 class="hero-title">
+          Master New Skills with 
+          <span class="gradient-text">Expert-Led Courses</span>
+        </h1>
+        <p class="hero-description">
+          Join thousands of learners advancing their careers with our comprehensive 
+          online courses. Learn at your own pace, earn certificates, and transform your future.
+        </p>
+        
+        <div class="hero-actions" *ngIf="!(isLoggedIn$ | async)">
+          <button mat-raised-button 
+                  routerLink="/auth/register" 
+                  class="btn-gradient btn-large">
+            <mat-icon>rocket_launch</mat-icon>
+            Start Learning Today
+          </button>
+          <button mat-stroked-button 
+                  routerLink="/courses" 
+                  class="btn-outline">
+            <mat-icon>explore</mat-icon>
+            Browse Courses
+          </button>
+        </div>
+
+        <div class="hero-actions" *ngIf="currentUser$ | async as user">
+          <button mat-raised-button 
+                  [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
+                  class="btn-gradient btn-large">
+            <mat-icon>dashboard</mat-icon>
+            Go to Dashboard
+          </button>
+          <button mat-stroked-button 
+                  routerLink="/courses" 
+                  class="btn-outline">
+            <mat-icon>library_books</mat-icon>
+            Explore Courses
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="hero-stats fade-in-up">
+        <div class="stat-item">
+          <h3>{{stats.totalCourses}}+</h3>
+          <p>Expert Courses</p>
+        </div>
+        <div class="stat-item">
+          <h3>{{stats.totalStudents}}+</h3>
+          <p>Active Students</p>
+        </div>
+        <div class="stat-item">
+          <h3>{{stats.averageRating}}/5</h3>
+          <p>Average Rating</p>
+        </div>
+        <div class="stat-item">
+          <h3>{{stats.categoriesCount}}+</h3>
+          <p>Categories</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Hero Background Elements -->
+  <div class="hero-bg-elements">
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+    <div class="bg-circle circle-3"></div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <div class="section-header text-center">
+      <h2>Why Choose CourseHub?</h2>
+      <p>Everything you need to succeed in your learning journey</p>
+    </div>
+
+    <div class="features-grid grid grid-4">
+      <div class="feature-card card-elevated fade-in-up" 
+           *ngFor="let feature of features; trackBy: trackByFeature">
+        <div class="feature-icon">
+          <mat-icon>{{feature.icon}}</mat-icon>
+        </div>
+        <h3>{{feature.title}}</h3>
+        <p>{{feature.description}}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Courses Section -->
+<section class="courses-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Featured Courses</h2>
+      <p>Start your learning journey with our most popular courses</p>
+      <button mat-button 
+              routerLink="/courses" 
+              class="view-all-btn">
+        View All Courses
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <div class="courses-grid grid grid-3" *ngIf="featuredCourses$ | async as courses">
+      <app-course-card 
+        *ngFor="let course of courses; trackBy: trackByCourse" 
+        [course]="course"
+        class="fade-in-up">
+      </app-course-card>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="(featuredCourses$ | async)?.length === 0">
+      <mat-icon>school</mat-icon>
+      <h3>No courses available</h3>
+      <p>Check back later for exciting new courses!</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section" *ngIf="!(isLoggedIn$ | async)">
+  <div class="container">
+    <div class="cta-content">
+      <div class="cta-text">
+        <h2>Ready to Start Learning?</h2>
+        <p>Join our community of learners and take the next step in your career</p>
+      </div>
+      <div class="cta-actions">
+        <button mat-raised-button 
+                routerLink="/auth/register" 
+                class="btn-gradient btn-large">
+          <mat-icon>person_add</mat-icon>
+          Create Account
+        </button>
+        <button mat-button 
+                routerLink="/courses" 
+                class="btn-text">
+          Browse Courses
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Welcome Back Section for Logged-in Users -->
+<section class="welcome-section" *ngIf="currentUser$ | async as user">
+  <div class="container">
+    <div class="welcome-content">
+      <div class="welcome-text">
+        <h2>Welcome back, {{user.name}}!</h2>
+        <p *ngIf="user.role === 'student'">
+          Continue your learning journey or explore new courses
+        </p>
+        <p *ngIf="user.role === 'admin'">
+          Manage your courses and track student progress
+        </p>
+      </div>
+      <div class="welcome-actions">
+        <button mat-raised-button 
+                [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
+                class="btn-gradient">
+          <mat-icon>dashboard</mat-icon>
+          Go to Dashboard
+        </button>
+        <button mat-button 
+                routerLink="/courses/add" 
+                *ngIf="user.role === 'admin'">
+          <mat-icon>add</mat-icon>
+          Add New Course
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

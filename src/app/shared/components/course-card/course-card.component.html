@@ -1,0 +1,136 @@
+<mat-card class="course-card" [class.enrolled]="isEnrolled">
+  <!-- Course Image -->
+  <div class="course-image-container">
+    <img 
+      [src]="course.image" 
+      [alt]="course.title"
+      class="course-image"
+      (error)="$event.target.src='https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop'"
+    >
+    
+    <!-- Enrollment Badge -->
+    <div class="enrollment-badge" *ngIf="isEnrolled">
+      <mat-icon>check_circle</mat-icon>
+      <span>Enrolled</span>
+    </div>
+
+    <!-- Price Badge -->
+    <div class="price-badge" [class.free]="course.price === 0">
+      {{formatPrice(course.price)}}
+    </div>
+
+    <!-- Level Badge -->
+    <div class="level-badge" [ngClass]="'level-' + course.level.toLowerCase()">
+      {{course.level}}
+    </div>
+  </div>
+
+  <!-- Course Content -->
+  <mat-card-content class="course-content">
+    <!-- Category -->
+    <div class="course-category">
+      <mat-icon>category</mat-icon>
+      <span>{{course.category}}</span>
+    </div>
+
+    <!-- Title -->
+    <h3 class="course-title" [routerLink]="['/courses', course.id]">
+      {{course.title}}
+    </h3>
+
+    <!-- Instructor -->
+    <div class="course-instructor">
+      <mat-icon>person</mat-icon>
+      <span>{{course.instructor}}</span>
+    </div>
+
+    <!-- Description -->
+    <p class="course-description">
+      {{course.description.length > 120 ? (course.description | slice:0:120) + '...' : course.description}}
+    </p>
+
+    <!-- Course Meta Info -->
+    <div class="course-meta">
+      <div class="meta-item">
+        <mat-icon>schedule</mat-icon>
+        <span>{{formatDuration(course.duration)}}</span>
+      </div>
+      
+      <div class="meta-item">
+        <mat-icon>people</mat-icon>
+        <span>{{course.studentsEnrolled | number}}</span>
+      </div>
+
+      <div class="meta-item rating-item">
+        <div class="rating-stars">
+          <mat-icon class="star filled" *ngFor="let star of ratingStars">star</mat-icon>
+          <mat-icon class="star half" *ngIf="hasPartialStar">star_half</mat-icon>
+          <mat-icon class="star empty" *ngFor="let star of emptyStars">star_border</mat-icon>
+        </div>
+        <span class="rating-value">{{course.rating | number:'1.1-1'}}</span>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="course-tags" *ngIf="course.tags && course.tags.length > 0">
+      <mat-chip-set>
+        <mat-chip 
+          *ngFor="let tag of course.tags.slice(0, 3)" 
+          class="course-tag">
+          {{tag}}
+        </mat-chip>
+        <mat-chip 
+          *ngIf="course.tags.length > 3" 
+          class="course-tag more-tags">
+          +{{course.tags.length - 3}}
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+  </mat-card-content>
+
+  <!-- Course Actions -->
+  <mat-card-actions class="course-actions" *ngIf="showActions">
+    <div class="action-buttons">
+      <!-- View Details Button -->
+      <button 
+        mat-button 
+        [routerLink]="['/courses', course.id]"
+        class="view-details-btn">
+        <mat-icon>visibility</mat-icon>
+        View Details
+      </button>
+
+      <!-- Enroll/Unenroll Button -->
+      <button 
+        mat-raised-button 
+        *ngIf="showEnrollButton && isStudent"
+        (click)="onEnroll()"
+        [class.enrolled-btn]="isEnrolled"
+        class="enroll-btn">
+        <mat-icon>{{isEnrolled ? 'check' : 'add'}}</mat-icon>
+        {{isEnrolled ? 'Enrolled' : 'Enroll Now'}}
+      </button>
+
+      <!-- Admin Actions -->
+      <div class="admin-actions" *ngIf="isAdmin">
+        <button 
+          mat-button 
+          [routerLink]="['/courses/edit', course.id]"
+          class="edit-btn">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+      </div>
+
+      <!-- Login Prompt for Non-logged Users -->
+      <button 
+        mat-raised-button 
+        routerLink="/auth/login"
+        *ngIf="!isLoggedIn && showEnrollButton"
+        class="btn-gradient">
+        <mat-icon>login</mat-icon>
+        Login to Enroll
+      </button>
+    </div>
+  </mat-card-actions>
+</mat-card>

@@ -1,0 +1,157 @@
+{
+  "courses": [
+    {
+      "id": "3",
+      "title": "Advanced React Development",
+      "description": "Deep dive into React ecosystem with Redux, TypeScript, testing, and performance optimization.",
+      "instructor": "Alex Rodriguez",
+      "duration": "8 weeks",
+      "category": "Web Development",
+      "level": "Advanced",
+      "price": 399,
+      "rating": 4.7,
+      "studentsEnrolled": 856,
+      "image": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop",
+      "syllabus": [
+        "Advanced React Patterns",
+        "State Management with Redux Toolkit",
+        "TypeScript with React",
+        "Performance Optimization",
+        "Testing Strategies",
+        "Server-side Rendering",
+        "GraphQL Integration",
+        "Production Deployment"
+      ],
+      "prerequisites": ["Solid React experience", "JavaScript ES6+", "Basic TypeScript"],
+      "tags": ["react", "redux", "typescript", "frontend", "advanced"],
+      "createdAt": "2023-03-10T00:00:00Z",
+      "updatedAt": "2024-01-05T00:00:00Z",
+      "isPublished": true
+    },
+    {
+      "id": "4",
+      "title": "Mobile App Development with Flutter",
+      "description": "Build beautiful, native mobile apps for iOS and Android using Google's Flutter framework.",
+      "instructor": "Emma Thompson",
+      "duration": "14 weeks",
+      "category": "Mobile Development",
+      "level": "Intermediate",
+      "price": 349,
+      "rating": 4.6,
+      "studentsEnrolled": 967,
+      "image": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop",
+      "syllabus": [
+        "Introduction to Flutter and Dart",
+        "Widget System and Layouts",
+        "State Management Solutions",
+        "Navigation and Routing",
+        "Working with APIs",
+        "Local Storage and Databases",
+        "Platform-specific Features",
+        "App Store Deployment"
+      ],
+      "prerequisites": ["Basic programming experience", "Object-oriented concepts"],
+      "tags": ["flutter", "dart", "mobile", "ios", "android"],
+      "createdAt": "2023-04-05T00:00:00Z",
+      "updatedAt": "2024-01-20T00:00:00Z",
+      "isPublished": true
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "email": "admin@courseapp.com",
+      "name": "Admin User",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "enrolledCourses": [],
+      "createdAt": "2023-01-15T00:00:00Z"
+    },
+    {
+      "id": "2",
+      "email": "student@courseapp.com",
+      "name": "John Student",
+      "role": "student",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "enrolledCourses": ["1", "3"],
+      "createdAt": "2023-02-20T00:00:00Z"
+    },
+    {
+      "id": "3",
+      "email": "jane.doe@courseapp.com",
+      "name": "Jane Doe",
+      "role": "student",
+      "avatar": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
+      "enrolledCourses": ["2"],
+      "createdAt": "2023-03-10T00:00:00Z"
+    }
+  ],
+  "categories": [
+    "Web Development",
+    "Data Science",
+    "Mobile Development",
+    "DevOps",
+    "Design",
+    "Machine Learning",
+    "Cybersecurity",
+    "Database",
+    "Game Development",
+    "Blockchain"
+  ]
+}
+      "id": "1",
+      "title": "Complete Angular Development",
+      "description": "Master Angular from basics to advanced concepts with hands-on projects and real-world applications.",
+      "instructor": "Dr. Sarah Johnson",
+      "duration": "12 weeks",
+      "category": "Web Development",
+      "level": "Intermediate",
+      "price": 299,
+      "rating": 4.8,
+      "studentsEnrolled": 1247,
+      "image": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop",
+      "syllabus": [
+        "Introduction to Angular and TypeScript",
+        "Components and Data Binding",
+        "Services and Dependency Injection",
+        "Routing and Navigation",
+        "Forms and Validation",
+        "HTTP Client and APIs",
+        "State Management with NgRx",
+        "Testing and Deployment"
+      ],
+      "prerequisites": ["Basic JavaScript", "HTML/CSS", "TypeScript (recommended)"],
+      "tags": ["angular", "typescript", "web-development", "frontend"],
+      "createdAt": "2023-01-15T00:00:00Z",
+      "updatedAt": "2024-01-10T00:00:00Z",
+      "isPublished": true
+    },
+    {
+      "id": "2",
+      "title": "Python for Data Science",
+      "description": "Learn Python programming with focus on data analysis, machine learning, and scientific computing.",
+      "instructor": "Prof. Michael Chen",
+      "duration": "10 weeks",
+      "category": "Data Science",
+      "level": "Beginner",
+      "price": 249,
+      "rating": 4.9,
+      "studentsEnrolled": 2156,
+      "image": "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=250&fit=crop",
+      "syllabus": [
+        "Python Basics and Syntax",
+        "Data Structures and Libraries",
+        "NumPy and Pandas",
+        "Data Visualization with Matplotlib",
+        "Statistical Analysis",
+        "Introduction to Machine Learning",
+        "Scikit-learn Fundamentals",
+        "Real-world Projects"
+      ],
+      "prerequisites": ["Basic programming knowledge", "High school mathematics"],
+      "tags": ["python", "data-science", "machine-learning", "analytics"],
+      "createdAt": "2023-02-20T00:00:00Z",
+      "updatedAt": "2024-01-15T00:00:00Z",
+      "isPublished": true
+    },
+    {
