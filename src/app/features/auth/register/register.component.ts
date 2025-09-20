@@ -117,8 +117,11 @@ export class RegisterComponent implements OnInit {
 
       const { confirmPassword, terms, ...registerData }: RegisterData & { confirmPassword: string; terms: boolean } = this.registerForm.value;
 
+      console.log('Attempting registration with:', { ...registerData, password: '[HIDDEN]' });
+
       this.authService.register(registerData).subscribe({
         next: (user) => {
+          console.log('Registration successful:', user);
           this.notificationService.success(`Welcome to CourseHub, ${user.name}!`);
           
           // Navigate to appropriate dashboard
@@ -126,7 +129,20 @@ export class RegisterComponent implements OnInit {
           this.router.navigate([dashboardUrl]);
         },
         error: (error) => {
-          this.notificationService.error(error.message || 'Registration failed. Please try again.');
+          console.error('Registration failed:', error);
+          
+          let errorMessage = 'Registration failed. Please try again.';
+          if (error.message) {
+            if (error.message.includes('email')) {
+              errorMessage = 'This email is already registered. Please use a different email or try logging in.';
+            } else if (error.message.includes('password')) {
+              errorMessage = 'Password does not meet requirements. Please choose a stronger password.';
+            } else {
+              errorMessage = error.message;
+            }
+          }
+          
+          this.notificationService.error(errorMessage);
         },
         complete: () => {
           this.isLoading = false;
@@ -135,6 +151,7 @@ export class RegisterComponent implements OnInit {
       });
     } else {
       this.markFormGroupTouched();
+      this.notificationService.warning('Please fill in all required fields correctly');
     }
   }
 

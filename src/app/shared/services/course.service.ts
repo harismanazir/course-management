@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
@@ -43,6 +43,8 @@ export class CourseService {
   ) {}
 
   getAllCourses(filters?: CourseFilters): Observable<Course[]> {
+    console.log('Fetching all courses with filters:', filters);
+    
     let query = this.supabase.from('courses')
       .select(`
         *,
@@ -51,50 +53,85 @@ export class CourseService {
       .eq('is_published', true)
       .order('created_at', { ascending: false });
 
-    // Apply filters
-    if (filters?.category) {
-      query = query.eq('categories.name', filters.category);
-    }
-    if (filters?.level) {
-      query = query.eq('level', filters.level);
-    }
-    if (filters?.minPrice !== undefined) {
-      query = query.gte('price', filters.minPrice);
-    }
-    if (filters?.maxPrice !== undefined) {
-      query = query.lte('price', filters.maxPrice);
-    }
-
     return from(query).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching courses:', error);
+          throw error;
+        }
         
-        let courses = data?.map(this.mapDbCourseToCourse) || [];
-
-        // Apply text-based filters (search, instructor)
-        if (filters?.search) {
-          const searchTerm = filters.search.toLowerCase();
-          courses = courses.filter(course =>
-            course.title.toLowerCase().includes(searchTerm) ||
-            course.description.toLowerCase().includes(searchTerm) ||
-            course.instructor.toLowerCase().includes(searchTerm) ||
-            course.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-          );
+        console.log('Raw course data from database:', data);
+        
+        if (!data || data.length === 0) {
+          console.log('No courses found in database');
+          return [];
         }
 
-        if (filters?.instructor) {
-          courses = courses.filter(course =>
-            course.instructor.toLowerCase().includes(filters.instructor!.toLowerCase())
-          );
+        let courses = data.map(course => {
+          console.log('Mapping course:', course);
+          return this.mapDbCourseToCourse(course);
+        });
+
+        console.log('Mapped courses:', courses);
+
+        // Apply filters
+        if (filters) {
+          courses = this.applyFilters(courses, filters);
+          console.log('Filtered courses:', courses);
         }
 
         return courses;
       }),
       catchError(error => {
-        console.error('Error fetching courses:', error);
-        return throwError(() => error);
+        console.error('Error in getAllCourses:', error);
+        // Return empty array instead of throwing to prevent UI breaking
+        return of([]);
       })
     );
+  }
+
+  private applyFilters(courses: Course[], filters: CourseFilters): Course[] {
+    return courses.filter(course => {
+      // Category filter
+      if (filters.category && course.category !== filters.category) {
+        return false;
+      }
+
+      // Level filter
+      if (filters.level && course.level !== filters.level) {
+        return false;
+      }
+
+      // Price range filter
+      if (filters.minPrice !== undefined && course.price < filters.minPrice) {
+        return false;
+      }
+      if (filters.maxPrice !== undefined && course.price > filters.maxPrice) {
+        return false;
+      }
+
+      // Search filter
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        const searchableText = [
+          course.title,
+          course.description,
+          course.instructor,
+          ...course.tags
+        ].join(' ').toLowerCase();
+        
+        if (!searchableText.includes(searchTerm)) {
+          return false;
+        }
+      }
+
+      // Instructor filter
+      if (filters.instructor && !course.instructor.toLowerCase().includes(filters.instructor.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   getCourseById(id: string): Observable<Course | undefined> {
@@ -102,21 +139,21 @@ export class CourseService {
       this.supabase.from('courses')
         .select(`
           *,
-          categories(name)
+          categories!inner(name)
         `)
         .eq('id', id)
-        .single()
+        .maybeSingle()
     ).pipe(
       map(({ data, error }) => {
         if (error) {
-          if (error.code === 'PGRST116') return undefined; // Not found
-          throw error;
+          console.error('Error fetching course by ID:', error);
+          return undefined;
         }
         return data ? this.mapDbCourseToCourse(data) : undefined;
       }),
       catchError(error => {
-        console.error('Error fetching course:', error);
-        return throwError(() => error);
+        console.error('getCourseById error:', error);
+        return of(undefined);
       })
     );
   }
@@ -132,39 +169,53 @@ export class CourseService {
       this.supabase.from('categories')
         .select('id')
         .eq('name', courseData.category)
-        .single()
+        .maybeSingle()
     ).pipe(
       switchMap(({ data: categoryData, error: categoryError }) => {
-        if (categoryError) throw categoryError;
+        if (categoryError) {
+          console.error('Category error:', categoryError);
+          throw new Error('Failed to find category');
+        }
+
+        if (!categoryData) {
+          throw new Error(`Category "${courseData.category}" not found`);
+        }
+
+        const insertData = {
+          title: courseData.title,
+          description: courseData.description,
+          instructor: courseData.instructor,
+          duration: courseData.duration,
+          category_id: categoryData.id,
+          level: courseData.level,
+          price: courseData.price,
+          image: courseData.image,
+          syllabus: courseData.syllabus,
+          prerequisites: courseData.prerequisites,
+          tags: courseData.tags,
+          is_published: courseData.isPublished,
+          created_by: user.id,
+          rating: 4.5, // Default rating
+          students_enrolled: 0
+        };
 
         return from(
-          this.supabase.from('courses').insert({
-            title: courseData.title,
-            description: courseData.description,
-            instructor: courseData.instructor,
-            duration: courseData.duration,
-            category_id: (categoryData as any).id,
-            level: courseData.level,
-            price: courseData.price,
-            image: courseData.image,
-            syllabus: courseData.syllabus,
-            prerequisites: courseData.prerequisites,
-            tags: courseData.tags,
-            is_published: courseData.isPublished,
-            created_by: user.id
-          } as any).select(`
+          this.supabase.from('courses').insert(insertData).select(`
             *,
-            categories(name)
+            categories!inner(name)
           `).single()
         );
       }),
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Course creation error:', error);
+          throw error;
+        }
         return this.mapDbCourseToCourse(data);
       }),
       catchError(error => {
-        console.error('Error creating course:', error);
-        return throwError(() => error);
+        console.error('createCourse error:', error);
+        return throwError(() => new Error('Failed to create course'));
       })
     );
   }
@@ -193,14 +244,15 @@ export class CourseService {
             description: updates.description,
             instructor: updates.instructor,
             duration: updates.duration,
-            category_id: (categoryData as any).id,
+            category_id: categoryData.id,
             level: updates.level,
             price: updates.price,
             image: updates.image,
             syllabus: updates.syllabus,
             prerequisites: updates.prerequisites,
             tags: updates.tags,
-            is_published: updates.isPublished
+            is_published: updates.isPublished,
+            updated_at: new Date().toISOString()
           };
 
           // Remove undefined values
@@ -212,11 +264,11 @@ export class CourseService {
 
           return from(
             this.supabase.from('courses')
-              .update(updateData as any)
+              .update(updateData)
               .eq('id', id)
               .select(`
                 *,
-                categories(name)
+                categories!inner(name)
               `)
               .single()
           );
@@ -234,7 +286,8 @@ export class CourseService {
         syllabus: updates.syllabus,
         prerequisites: updates.prerequisites,
         tags: updates.tags,
-        is_published: updates.isPublished
+        is_published: updates.isPublished,
+        updated_at: new Date().toISOString()
       };
 
       // Remove undefined values
@@ -246,11 +299,11 @@ export class CourseService {
 
       updateObservable = from(
         this.supabase.from('courses')
-          .update(updateData as any)
+          .update(updateData)
           .eq('id', id)
           .select(`
             *,
-            categories(name)
+            categories!inner(name)
           `)
           .single()
       );
@@ -262,8 +315,8 @@ export class CourseService {
         return this.mapDbCourseToCourse(data);
       }),
       catchError(error => {
-        console.error('Error updating course:', error);
-        return throwError(() => error);
+        console.error('updateCourse error:', error);
+        return throwError(() => new Error('Failed to update course'));
       })
     );
   }
@@ -284,8 +337,8 @@ export class CourseService {
         return true;
       }),
       catchError(error => {
-        console.error('Error deleting course:', error);
-        return throwError(() => error);
+        console.error('deleteCourse error:', error);
+        return throwError(() => new Error('Failed to delete course'));
       })
     );
   }
@@ -297,12 +350,15 @@ export class CourseService {
         .order('name')
     ).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching categories:', error);
+          return [];
+        }
         return data?.map((cat: any) => cat.name) || [];
       }),
       catchError(error => {
-        console.error('Error fetching categories:', error);
-        return throwError(() => error);
+        console.error('getCategories error:', error);
+        return of([]);
       })
     );
   }
@@ -314,13 +370,16 @@ export class CourseService {
         .eq('is_published', true)
     ).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching instructors:', error);
+          return [];
+        }
         const instructors = [...new Set(data?.map((course: any) => course.instructor) || [])];
         return instructors.sort();
       }),
       catchError(error => {
-        console.error('Error fetching instructors:', error);
-        return throwError(() => error);
+        console.error('getInstructors error:', error);
+        return of([]);
       })
     );
   }
@@ -330,19 +389,22 @@ export class CourseService {
       this.supabase.from('courses')
         .select(`
           *,
-          categories(name)
+          categories!inner(name)
         `)
         .eq('is_published', true)
         .order('rating', { ascending: false })
         .limit(limit)
     ).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching featured courses:', error);
+          return [];
+        }
         return data?.map(this.mapDbCourseToCourse) || [];
       }),
       catchError(error => {
-        console.error('Error fetching featured courses:', error);
-        return throwError(() => error);
+        console.error('getFeaturedCourses error:', error);
+        return of([]);
       })
     );
   }
@@ -352,40 +414,50 @@ export class CourseService {
       this.supabase.from('courses')
         .select(`
           *,
-          categories(name)
+          categories!inner(name)
         `)
         .eq('is_published', true)
         .order('students_enrolled', { ascending: false })
         .limit(limit)
     ).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching popular courses:', error);
+          return [];
+        }
         return data?.map(this.mapDbCourseToCourse) || [];
       }),
       catchError(error => {
-        console.error('Error fetching popular courses:', error);
-        return throwError(() => error);
+        console.error('getPopularCourses error:', error);
+        return of([]);
       })
     );
   }
 
   getCoursesByIds(ids: string[]): Observable<Course[]> {
+    if (!ids || ids.length === 0) {
+      return of([]);
+    }
+
     return from(
       this.supabase.from('courses')
         .select(`
           *,
-          categories(name)
+          categories!inner(name)
         `)
         .in('id', ids)
         .eq('is_published', true)
     ).pipe(
       map(({ data, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching courses by IDs:', error);
+          return [];
+        }
         return data?.map(this.mapDbCourseToCourse) || [];
       }),
       catchError(error => {
-        console.error('Error fetching courses by IDs:', error);
-        return throwError(() => error);
+        console.error('getCoursesByIds error:', error);
+        return of([]);
       })
     );
   }
@@ -408,12 +480,19 @@ export class CourseService {
         const { data: courses, count: totalCourses, error: coursesError } = coursesResult;
         const { count: categoriesCount, error: categoriesError } = categoriesResult;
 
-        if (coursesError) throw coursesError;
-        if (categoriesError) throw categoriesError;
+        if (coursesError || categoriesError) {
+          console.error('Error fetching course stats:', coursesError || categoriesError);
+          return {
+            totalCourses: 0,
+            totalStudents: 0,
+            averageRating: 0,
+            categoriesCount: 0
+          };
+        }
 
-        const totalStudents = courses?.reduce((sum: number, course: any) => sum + course.students_enrolled, 0) || 0;
+        const totalStudents = courses?.reduce((sum: number, course: any) => sum + (course.students_enrolled || 0), 0) || 0;
         const averageRating = courses?.length 
-          ? courses.reduce((sum: number, course: any) => sum + course.rating, 0) / courses.length 
+          ? courses.reduce((sum: number, course: any) => sum + (course.rating || 0), 0) / courses.length 
           : 0;
 
         return {
@@ -424,31 +503,54 @@ export class CourseService {
         };
       }),
       catchError(error => {
-        console.error('Error fetching course stats:', error);
-        return throwError(() => error);
+        console.error('getCourseStats error:', error);
+        return of({
+          totalCourses: 0,
+          totalStudents: 0,
+          averageRating: 0,
+          categoriesCount: 0
+        });
       })
     );
   }
 
   private mapDbCourseToCourse(dbCourse: any): Course {
-    return {
+    console.log('Mapping database course:', dbCourse);
+    
+    // Handle both old and new category structure
+    let categoryName = 'Unknown';
+    if (dbCourse.categories) {
+      if (Array.isArray(dbCourse.categories) && dbCourse.categories.length > 0) {
+        categoryName = dbCourse.categories[0].name;
+      } else if (dbCourse.categories.name) {
+        categoryName = dbCourse.categories.name;
+      }
+    }
+    
+    const course: Course = {
       id: dbCourse.id,
-      title: dbCourse.title,
-      description: dbCourse.description,
-      instructor: dbCourse.instructor,
-      duration: dbCourse.duration,
-      category: dbCourse.categories?.name || 'Unknown',
-      level: dbCourse.level,
-      price: dbCourse.price,
-      rating: dbCourse.rating,
-      studentsEnrolled: dbCourse.students_enrolled,
+      title: dbCourse.title || 'Untitled Course',
+      description: dbCourse.description || 'No description available',
+      instructor: dbCourse.instructor || 'Unknown Instructor',
+      duration: dbCourse.duration || 'Not specified',
+      category: categoryName,
+      level: dbCourse.level || 'Beginner',
+      price: dbCourse.price || 0,
+      rating: dbCourse.rating || 0,
+      studentsEnrolled: dbCourse.students_enrolled || 0,
       image: dbCourse.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop',
-      syllabus: dbCourse.syllabus || [],
-      prerequisites: dbCourse.prerequisites || [],
-      tags: dbCourse.tags || [],
+      syllabus: Array.isArray(dbCourse.syllabus) ? dbCourse.syllabus : 
+                (typeof dbCourse.syllabus === 'string' ? JSON.parse(dbCourse.syllabus || '[]') : []),
+      prerequisites: Array.isArray(dbCourse.prerequisites) ? dbCourse.prerequisites : 
+                     (typeof dbCourse.prerequisites === 'string' ? JSON.parse(dbCourse.prerequisites || '[]') : []),
+      tags: Array.isArray(dbCourse.tags) ? dbCourse.tags : 
+            (typeof dbCourse.tags === 'string' ? JSON.parse(dbCourse.tags || '[]') : []),
       createdAt: new Date(dbCourse.created_at),
-      updatedAt: new Date(dbCourse.updated_at),
-      isPublished: dbCourse.is_published
+      updatedAt: new Date(dbCourse.updated_at || dbCourse.created_at),
+      isPublished: dbCourse.is_published || false
     };
+    
+    console.log('Mapped course result:', course);
+    return course;
   }
 }

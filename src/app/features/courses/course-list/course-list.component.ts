@@ -10,8 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
-import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
-import { map, startWith, debounceTime } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
+import { map, startWith, debounceTime, catchError, tap } from 'rxjs/operators';
 
 import { CourseService, Course, CourseFilters } from '../../../shared/services/course.service';
 import { AuthService } from '../../../shared/services/auth.service';
@@ -54,6 +54,7 @@ export class CourseListComponent implements OnInit {
   private enrolledCourseIds: string[] = [];
 
   ngOnInit() {
+    console.log('CourseListComponent initialized');
     this.initializeForm();
     this.loadData();
     this.setupFiltering();
@@ -72,15 +73,50 @@ export class CourseListComponent implements OnInit {
   }
 
   private loadData(): void {
-    this.courses$ = this.courseService.getAllCourses();
-    this.categories$ = this.courseService.getCategories();
-    this.instructors$ = this.courseService.getInstructors();
+    console.log('Loading course data...');
+    
+    // Load courses with error handling
+    this.courses$ = this.courseService.getAllCourses().pipe(
+      tap(courses => {
+        console.log('Courses loaded:', courses);
+        this.isLoadingSubject.next(false);
+      }),
+      catchError(error => {
+        console.error('Error loading courses:', error);
+        this.isLoadingSubject.next(false);
+        return of([]); // Return empty array on error
+      })
+    );
+    
+    // Load categories with error handling
+    this.categories$ = this.courseService.getCategories().pipe(
+      tap(categories => console.log('Categories loaded:', categories)),
+      catchError(error => {
+        console.error('Error loading categories:', error);
+        return of([]); // Return empty array on error
+      })
+    );
+    
+    // Load instructors with error handling
+    this.instructors$ = this.courseService.getInstructors().pipe(
+      tap(instructors => console.log('Instructors loaded:', instructors)),
+      catchError(error => {
+        console.error('Error loading instructors:', error);
+        return of([]); // Return empty array on error
+      })
+    );
   }
 
   private loadEnrollments(): void {
     if (this.authService.isStudent()) {
-      this.authService.getEnrolledCourses().subscribe(courseIds => {
-        this.enrolledCourseIds = courseIds;
+      this.authService.getEnrolledCourses().subscribe({
+        next: courseIds => {
+          this.enrolledCourseIds = courseIds;
+          console.log('Enrolled course IDs:', courseIds);
+        },
+        error: error => {
+          console.error('Error loading enrollments:', error);
+        }
       });
     }
   }
@@ -88,7 +124,8 @@ export class CourseListComponent implements OnInit {
   private setupFiltering(): void {
     const filters$ = this.filtersForm.valueChanges.pipe(
       startWith(this.filtersForm.value),
-      debounceTime(300)
+      debounceTime(300),
+      tap(filters => console.log('Filters changed:', filters))
     );
 
     this.filteredCourses$ = combineLatest([
@@ -96,34 +133,43 @@ export class CourseListComponent implements OnInit {
       filters$
     ]).pipe(
       map(([courses, filters]) => {
-        this.isLoadingSubject.next(true);
+        console.log('Filtering courses:', { coursesCount: courses.length, filters });
         
+        if (!courses || courses.length === 0) {
+          console.log('No courses to filter');
+          return [];
+        }
+
         let filtered = courses;
 
         // Search filter
-        if (filters.search) {
-          const searchTerm = filters.search.toLowerCase();
+        if (filters.search && filters.search.trim()) {
+          const searchTerm = filters.search.toLowerCase().trim();
           filtered = filtered.filter(course =>
             course.title.toLowerCase().includes(searchTerm) ||
             course.description.toLowerCase().includes(searchTerm) ||
             course.instructor.toLowerCase().includes(searchTerm) ||
             course.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm))
           );
+          console.log(`After search filter (${searchTerm}):`, filtered.length);
         }
 
         // Category filter
         if (filters.category) {
           filtered = filtered.filter(course => course.category === filters.category);
+          console.log(`After category filter (${filters.category}):`, filtered.length);
         }
 
         // Level filter
         if (filters.level) {
           filtered = filtered.filter(course => course.level === filters.level);
+          console.log(`After level filter (${filters.level}):`, filtered.length);
         }
 
         // Instructor filter
         if (filters.instructor) {
           filtered = filtered.filter(course => course.instructor === filters.instructor);
+          console.log(`After instructor filter (${filters.instructor}):`, filtered.length);
         }
 
         // Price range filter
@@ -131,10 +177,15 @@ export class CourseListComponent implements OnInit {
           filtered = filtered.filter(course => 
             course.price >= filters.minPrice && course.price <= filters.maxPrice
           );
+          console.log(`After price filter (${filters.minPrice}-${filters.maxPrice}):`, filtered.length);
         }
 
-        setTimeout(() => this.isLoadingSubject.next(false), 500);
+        console.log('Final filtered courses:', filtered);
         return filtered;
+      }),
+      catchError(error => {
+        console.error('Error in filtering:', error);
+        return of([]);
       })
     );
   }
@@ -144,6 +195,7 @@ export class CourseListComponent implements OnInit {
   }
 
   clearFilters(): void {
+    console.log('Clearing filters');
     this.filtersForm.reset({
       search: '',
       category: '',
