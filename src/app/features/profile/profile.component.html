@@ -229,7 +229,7 @@
                   <mat-icon>school</mat-icon>
                 </div>
                 <div class="stat-info">
-                  <h3>{{user.enrolledCourses?.length || 0}}</h3>
+                  <h3>{{getEnrolledCoursesCount()}}</h3>
                   <p>Enrolled Courses</p>
                 </div>
               </div>
@@ -239,7 +239,7 @@
                   <mat-icon>check_circle</mat-icon>
                 </div>
                 <div class="stat-info">
-                  <h3>{{getCompletedCourses(user.enrolledCourses?.length || 0)}}</h3>
+                  <h3>{{getCompletedCourses()}}</h3>
                   <p>Completed</p>
                 </div>
               </div>
@@ -249,7 +249,7 @@
                   <mat-icon>workspace_premium</mat-icon>
                 </div>
                 <div class="stat-info">
-                  <h3>{{getCertificates(user.enrolledCourses?.length || 0)}}</h3>
+                 <h3>{{getCertificates()}}</h3>
                   <p>Certificates</p>
                 </div>
               </div>

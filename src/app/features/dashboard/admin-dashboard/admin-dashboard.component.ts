@@ -43,27 +43,27 @@ export class AdminDashboardComponent implements OnInit {
   currentUser$: Observable<User | null> = this.authService.currentUser$;
   allCourses$!: Observable<Course[]>;
   
-  adminStats$ = combineLatest([
-    this.courseService.getAllCourses(),
-    this.courseService.getCategories()
-  ]).pipe(
-    map(([courses, categories]) => {
-      const totalStudents = courses.reduce((total, course) => total + course.studentsEnrolled, 0);
-      const publishedCourses = courses.filter(course => course.isPublished).length;
-      const averageRating = courses.length > 0 ? courses.reduce((total, course) => total + course.rating, 0) / courses.length : 0;
-      
-      return {
-        totalCourses: courses.length,
-        publishedCourses,
-        totalStudents,
-        totalCategories: categories.length,
-        averageRating: Math.round(averageRating * 10) / 10,
-        recentCourses: courses
-          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-          .slice(0, 5)
-      };
-    })
-  );
+// Update the adminStats$ observable
+adminStats$ = combineLatest([
+  this.courseService.getAllCourses(),
+  this.courseService.getCategories(),
+  this.courseService.getCourseStats()
+]).pipe(
+  map(([courses, categories, stats]) => {
+    const publishedCourses = courses.filter(course => course.isPublished).length;
+    
+    return {
+      totalCourses: courses.length,
+      publishedCourses,
+      totalStudents: stats.totalStudents,
+      totalCategories: categories.length,
+      averageRating: stats.averageRating,
+      recentCourses: courses
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 5)
+    };
+  })
+);
 
   displayedColumns: string[] = ['title', 'instructor', 'category', 'level', 'students', 'rating', 'status', 'actions'];
 

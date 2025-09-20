@@ -46,12 +46,16 @@ export class ProfileComponent implements OnInit {
   isChangingPassword = false;
   isLoading = false;
 
+  // Add these properties at the top of the class
+  private enrolledCoursesCount = 0;
+
   // Add Math property to make it available in template
   Math = Math;
 
   ngOnInit() {
     this.initializeForms();
     this.loadUserData();
+    this.loadEnrollmentStats(); // Add this line
   }
 
   private initializeForms(): void {
@@ -80,6 +84,15 @@ export class ProfileComponent implements OnInit {
         });
       }
     });
+  }
+
+  // Add this method
+  private loadEnrollmentStats(): void {
+    if (this.authService.isStudent()) {
+      this.authService.getEnrolledCourses().subscribe(courseIds => {
+        this.enrolledCoursesCount = courseIds.length;
+      });
+    }
   }
 
   private passwordMatchValidator(form: FormGroup) {
@@ -187,12 +200,16 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  // Helper methods for template calculations
-  getCompletedCourses(enrolledCount: number): number {
-    return Math.floor(enrolledCount * 0.3);
+  // Add these helper methods
+  getEnrolledCoursesCount(): number {
+    return this.enrolledCoursesCount;
   }
 
-  getCertificates(enrolledCount: number): number {
-    return Math.floor(enrolledCount * 0.3);
+  getCompletedCourses(): number {
+    return Math.floor(this.enrolledCoursesCount * 0.3);
+  }
+
+  getCertificates(): number {
+    return Math.floor(this.enrolledCoursesCount * 0.3);
   }
 }

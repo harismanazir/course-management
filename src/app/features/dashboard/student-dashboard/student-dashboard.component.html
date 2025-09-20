@@ -176,13 +176,14 @@
                 <p>Discover courses that match your interests</p>
               </div>
 
-              <div class="recommended-courses-grid" *ngIf="courses.length > 0">
-                <app-course-card 
-                  *ngFor="let course of courses" 
-                  [course]="course"
-                  [showEnrollButton]="true">
-                </app-course-card>
-              </div>
+   <div class="recommended-courses-grid" *ngIf="courses.length > 0">
+  <app-course-card 
+    *ngFor="let course of courses" 
+    [course]="course"
+    [isEnrolled]="false"
+    [showEnrollButton]="true">
+  </app-course-card>
+</div>
 
               <!-- No Recommendations -->
               <div class="empty-state" *ngIf="courses.length === 0">

@@ -7,7 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
-import { Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap } from 'rxjs';
 
 import { Course, CourseService } from '../../../shared/services/course.service';
 import { AuthService } from '../../../shared/services/auth.service';
@@ -39,8 +39,9 @@ export class CourseDetailComponent implements OnInit {
   course$!: Observable<Course | undefined>;
 
   ngOnInit() {
-    this.loadCourse();
-  }
+  this.loadCourse();
+  this.checkEnrollmentStatus();
+}
 
   private loadCourse(): void {
     this.course$ = this.route.params.pipe(
@@ -48,10 +49,21 @@ export class CourseDetailComponent implements OnInit {
     );
   }
 
-  get isEnrolled(): boolean {
-    const courseId = this.route.snapshot.params['id'];
-    return this.authService.isEnrolledInCourse(courseId);
-  }
+  // Add this property
+private enrollmentStatus$ = new BehaviorSubject <boolean>(false);
+
+
+
+private checkEnrollmentStatus(): void {
+  const courseId = this.route.snapshot.params['id'];
+  this.authService.isEnrolledInCourse(courseId).subscribe(isEnrolled => {
+    this.enrollmentStatus$.next(isEnrolled);
+  });
+}
+
+get isEnrolled(): boolean {
+  return this.enrollmentStatus$.value;
+}
 
   enrollInCourse(): void {
     const courseId = this.route.snapshot.params['id'];

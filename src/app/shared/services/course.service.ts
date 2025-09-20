@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, map, tap } from 'rxjs/operators';
+import { Observable, from, throwError } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { SupabaseService } from './supabase.service';
+import { AuthService } from './auth.service';
 
 export interface Course {
   id: string;
@@ -35,347 +37,356 @@ export interface CourseFilters {
   providedIn: 'root'
 })
 export class CourseService {
-  private coursesSubject = new BehaviorSubject<Course[]>([]);
-  public courses$ = this.coursesSubject.asObservable();
-
-  private categoriesSubject = new BehaviorSubject<string[]>([]);
-  public categories$ = this.categoriesSubject.asObservable();
-
-  private mockCourses: Course[] = [
-    {
-      id: '1',
-      title: 'Complete Angular Development',
-      description: 'Master Angular from basics to advanced concepts with hands-on projects and real-world applications.',
-      instructor: 'Dr. Sarah Johnson',
-      duration: '12 weeks',
-      category: 'Web Development',
-      level: 'Intermediate',
-      price: 299,
-      rating: 4.8,
-      studentsEnrolled: 1247,
-      image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop',
-      syllabus: [
-        'Introduction to Angular and TypeScript',
-        'Components and Data Binding',
-        'Services and Dependency Injection',
-        'Routing and Navigation',
-        'Forms and Validation',
-        'HTTP Client and APIs',
-        'State Management with NgRx',
-        'Testing and Deployment'
-      ],
-      prerequisites: ['Basic JavaScript', 'HTML/CSS', 'TypeScript (recommended)'],
-      tags: ['angular', 'typescript', 'web-development', 'frontend'],
-      createdAt: new Date('2023-01-15'),
-      updatedAt: new Date('2024-01-10'),
-      isPublished: true
-    },
-    {
-      id: '2',
-      title: 'Python for Data Science',
-      description: 'Learn Python programming with focus on data analysis, machine learning, and scientific computing.',
-      instructor: 'Prof. Michael Chen',
-      duration: '10 weeks',
-      category: 'Data Science',
-      level: 'Beginner',
-      price: 249,
-      rating: 4.9,
-      studentsEnrolled: 2156,
-      image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=250&fit=crop',
-      syllabus: [
-        'Python Basics and Syntax',
-        'Data Structures and Libraries',
-        'NumPy and Pandas',
-        'Data Visualization with Matplotlib',
-        'Statistical Analysis',
-        'Introduction to Machine Learning',
-        'Scikit-learn Fundamentals',
-        'Real-world Projects'
-      ],
-      prerequisites: ['Basic programming knowledge', 'High school mathematics'],
-      tags: ['python', 'data-science', 'machine-learning', 'analytics'],
-      createdAt: new Date('2023-02-20'),
-      updatedAt: new Date('2024-01-15'),
-      isPublished: true
-    },
-    {
-      id: '3',
-      title: 'Advanced React Development',
-      description: 'Deep dive into React ecosystem with Redux, TypeScript, testing, and performance optimization.',
-      instructor: 'Alex Rodriguez',
-      duration: '8 weeks',
-      category: 'Web Development',
-      level: 'Advanced',
-      price: 399,
-      rating: 4.7,
-      studentsEnrolled: 856,
-      image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop',
-      syllabus: [
-        'Advanced React Patterns',
-        'State Management with Redux Toolkit',
-        'TypeScript with React',
-        'Performance Optimization',
-        'Testing Strategies',
-        'Server-side Rendering',
-        'GraphQL Integration',
-        'Production Deployment'
-      ],
-      prerequisites: ['Solid React experience', 'JavaScript ES6+', 'Basic TypeScript'],
-      tags: ['react', 'redux', 'typescript', 'frontend', 'advanced'],
-      createdAt: new Date('2023-03-10'),
-      updatedAt: new Date('2024-01-05'),
-      isPublished: true
-    },
-    {
-      id: '4',
-      title: 'Mobile App Development with Flutter',
-      description: 'Build beautiful, native mobile apps for iOS and Android using Google\'s Flutter framework.',
-      instructor: 'Emma Thompson',
-      duration: '14 weeks',
-      category: 'Mobile Development',
-      level: 'Intermediate',
-      price: 349,
-      rating: 4.6,
-      studentsEnrolled: 967,
-      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop',
-      syllabus: [
-        'Introduction to Flutter and Dart',
-        'Widget System and Layouts',
-        'State Management Solutions',
-        'Navigation and Routing',
-        'Working with APIs',
-        'Local Storage and Databases',
-        'Platform-specific Features',
-        'App Store Deployment'
-      ],
-      prerequisites: ['Basic programming experience', 'Object-oriented concepts'],
-      tags: ['flutter', 'dart', 'mobile', 'ios', 'android'],
-      createdAt: new Date('2023-04-05'),
-      updatedAt: new Date('2024-01-20'),
-      isPublished: true
-    },
-    {
-      id: '5',
-      title: 'DevOps and Cloud Computing',
-      description: 'Master modern DevOps practices with Docker, Kubernetes, CI/CD, and cloud platforms.',
-      instructor: 'Robert Kim',
-      duration: '16 weeks',
-      category: 'DevOps',
-      level: 'Advanced',
-      price: 449,
-      rating: 4.8,
-      studentsEnrolled: 743,
-      image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop',
-      syllabus: [
-        'DevOps Fundamentals',
-        'Containerization with Docker',
-        'Container Orchestration with Kubernetes',
-        'CI/CD Pipelines',
-        'Infrastructure as Code',
-        'Monitoring and Logging',
-        'Cloud Platforms (AWS/Azure)',
-        'Security Best Practices'
-      ],
-      prerequisites: ['Linux basics', 'Command line experience', 'Basic networking'],
-      tags: ['devops', 'docker', 'kubernetes', 'cloud', 'aws'],
-      createdAt: new Date('2023-05-15'),
-      updatedAt: new Date('2024-01-12'),
-      isPublished: true
-    },
-    {
-      id: '6',
-      title: 'UI/UX Design Fundamentals',
-      description: 'Learn user interface and user experience design principles with practical design projects.',
-      instructor: 'Jessica Liu',
-      duration: '6 weeks',
-      category: 'Design',
-      level: 'Beginner',
-      price: 199,
-      rating: 4.7,
-      studentsEnrolled: 1532,
-      image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop',
-      syllabus: [
-        'Design Thinking Process',
-        'User Research Methods',
-        'Wireframing and Prototyping',
-        'Visual Design Principles',
-        'Color Theory and Typography',
-        'Usability Testing',
-        'Design Tools (Figma, Adobe XD)',
-        'Portfolio Development'
-      ],
-      prerequisites: ['No prior experience required', 'Creative mindset'],
-      tags: ['ui', 'ux', 'design', 'figma', 'prototyping'],
-      createdAt: new Date('2023-06-01'),
-      updatedAt: new Date('2024-01-08'),
-      isPublished: true
-    }
-  ];
-
-  private mockCategories = [
-    'Web Development',
-    'Data Science',
-    'Mobile Development',
-    'DevOps',
-    'Design',
-    'Machine Learning',
-    'Cybersecurity',
-    'Database',
-    'Game Development',
-    'Blockchain'
-  ];
-
-  constructor() {
-    this.initializeMockData();
-  }
-
-  private initializeMockData(): void {
-    this.coursesSubject.next(this.mockCourses);
-    this.categoriesSubject.next(this.mockCategories);
-  }
+  constructor(
+    private supabase: SupabaseService,
+    private authService: AuthService
+  ) {}
 
   getAllCourses(filters?: CourseFilters): Observable<Course[]> {
-    return of(this.mockCourses).pipe(
-      delay(800),
-      map(courses => {
-        let filteredCourses = courses.filter(course => course.isPublished);
+    let query = this.supabase.from('courses')
+      .select(`
+        *,
+        categories(name)
+      `)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
 
-        if (filters) {
-          if (filters.search) {
-            const searchTerm = filters.search.toLowerCase();
-            filteredCourses = filteredCourses.filter(course =>
-              course.title.toLowerCase().includes(searchTerm) ||
-              course.description.toLowerCase().includes(searchTerm) ||
-              course.instructor.toLowerCase().includes(searchTerm) ||
-              course.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-            );
-          }
+    // Apply filters
+    if (filters?.category) {
+      query = query.eq('categories.name', filters.category);
+    }
+    if (filters?.level) {
+      query = query.eq('level', filters.level);
+    }
+    if (filters?.minPrice !== undefined) {
+      query = query.gte('price', filters.minPrice);
+    }
+    if (filters?.maxPrice !== undefined) {
+      query = query.lte('price', filters.maxPrice);
+    }
 
-          if (filters.category) {
-            filteredCourses = filteredCourses.filter(course => course.category === filters.category);
-          }
+    return from(query).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        
+        let courses = data?.map(this.mapDbCourseToCourse) || [];
 
-          if (filters.level) {
-            filteredCourses = filteredCourses.filter(course => course.level === filters.level);
-          }
-
-          if (filters.instructor) {
-            filteredCourses = filteredCourses.filter(course => 
-              course.instructor.toLowerCase().includes(filters.instructor!.toLowerCase())
-            );
-          }
-
-          if (filters.minPrice !== undefined) {
-            filteredCourses = filteredCourses.filter(course => course.price >= filters.minPrice!);
-          }
-
-          if (filters.maxPrice !== undefined) {
-            filteredCourses = filteredCourses.filter(course => course.price <= filters.maxPrice!);
-          }
+        // Apply text-based filters (search, instructor)
+        if (filters?.search) {
+          const searchTerm = filters.search.toLowerCase();
+          courses = courses.filter(course =>
+            course.title.toLowerCase().includes(searchTerm) ||
+            course.description.toLowerCase().includes(searchTerm) ||
+            course.instructor.toLowerCase().includes(searchTerm) ||
+            course.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+          );
         }
 
-        return filteredCourses;
+        if (filters?.instructor) {
+          courses = courses.filter(course =>
+            course.instructor.toLowerCase().includes(filters.instructor!.toLowerCase())
+          );
+        }
+
+        return courses;
       }),
-      tap(courses => this.coursesSubject.next(courses))
+      catchError(error => {
+        console.error('Error fetching courses:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   getCourseById(id: string): Observable<Course | undefined> {
-    return of(this.mockCourses.find(course => course.id === id)).pipe(
-      delay(500)
+    return from(
+      this.supabase.from('courses')
+        .select(`
+          *,
+          categories(name)
+        `)
+        .eq('id', id)
+        .single()
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          if (error.code === 'PGRST116') return undefined; // Not found
+          throw error;
+        }
+        return data ? this.mapDbCourseToCourse(data) : undefined;
+      }),
+      catchError(error => {
+        console.error('Error fetching course:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   createCourse(courseData: Omit<Course, 'id' | 'createdAt' | 'updatedAt' | 'studentsEnrolled' | 'rating'>): Observable<Course> {
-    const newCourse: Course = {
-      ...courseData,
-      id: Date.now().toString(),
-      rating: 0,
-      studentsEnrolled: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isPublished: true
-    };
+    const user = this.authService.getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return throwError(() => new Error('Only admins can create courses'));
+    }
 
-    return of(newCourse).pipe(
-      delay(1000),
-      tap(course => {
-        this.mockCourses.unshift(course);
-        this.coursesSubject.next([...this.mockCourses]);
+    // First get category ID
+    return from(
+      this.supabase.from('categories')
+        .select('id')
+        .eq('name', courseData.category)
+        .single()
+    ).pipe(
+      switchMap(({ data: categoryData, error: categoryError }) => {
+        if (categoryError) throw categoryError;
+
+        return from(
+          this.supabase.from('courses').insert({
+            title: courseData.title,
+            description: courseData.description,
+            instructor: courseData.instructor,
+            duration: courseData.duration,
+            category_id: (categoryData as any).id,
+            level: courseData.level,
+            price: courseData.price,
+            image: courseData.image,
+            syllabus: courseData.syllabus,
+            prerequisites: courseData.prerequisites,
+            tags: courseData.tags,
+            is_published: courseData.isPublished,
+            created_by: user.id
+          } as any).select(`
+            *,
+            categories(name)
+          `).single()
+        );
+      }),
+      map(({ data, error }) => {
+        if (error) throw error;
+        return this.mapDbCourseToCourse(data);
+      }),
+      catchError(error => {
+        console.error('Error creating course:', error);
+        return throwError(() => error);
       })
     );
   }
 
   updateCourse(id: string, updates: Partial<Course>): Observable<Course> {
-    const courseIndex = this.mockCourses.findIndex(course => course.id === id);
-    
-    if (courseIndex === -1) {
-      return throwError(() => new Error('Course not found'));
+    const user = this.authService.getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return throwError(() => new Error('Only admins can update courses'));
     }
 
-    return of(null).pipe(
-      delay(800),
-      tap(() => {
-        this.mockCourses[courseIndex] = {
-          ...this.mockCourses[courseIndex],
-          ...updates,
-          updatedAt: new Date()
-        };
-        this.coursesSubject.next([...this.mockCourses]);
+    let updateObservable: Observable<any>;
+
+    if (updates.category) {
+      // If category is being updated, get the new category ID first
+      updateObservable = from(
+        this.supabase.from('categories')
+          .select('id')
+          .eq('name', updates.category)
+          .single()
+      ).pipe(
+        switchMap(({ data: categoryData, error: categoryError }) => {
+          if (categoryError) throw categoryError;
+
+          const updateData: any = {
+            title: updates.title,
+            description: updates.description,
+            instructor: updates.instructor,
+            duration: updates.duration,
+            category_id: (categoryData as any).id,
+            level: updates.level,
+            price: updates.price,
+            image: updates.image,
+            syllabus: updates.syllabus,
+            prerequisites: updates.prerequisites,
+            tags: updates.tags,
+            is_published: updates.isPublished
+          };
+
+          // Remove undefined values
+          Object.keys(updateData).forEach(key => {
+            if (updateData[key] === undefined) {
+              delete updateData[key];
+            }
+          });
+
+          return from(
+            this.supabase.from('courses')
+              .update(updateData as any)
+              .eq('id', id)
+              .select(`
+                *,
+                categories(name)
+              `)
+              .single()
+          );
+        })
+      );
+    } else {
+      const updateData: any = {
+        title: updates.title,
+        description: updates.description,
+        instructor: updates.instructor,
+        duration: updates.duration,
+        level: updates.level,
+        price: updates.price,
+        image: updates.image,
+        syllabus: updates.syllabus,
+        prerequisites: updates.prerequisites,
+        tags: updates.tags,
+        is_published: updates.isPublished
+      };
+
+      // Remove undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      updateObservable = from(
+        this.supabase.from('courses')
+          .update(updateData as any)
+          .eq('id', id)
+          .select(`
+            *,
+            categories(name)
+          `)
+          .single()
+      );
+    }
+
+    return updateObservable.pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return this.mapDbCourseToCourse(data);
       }),
-      map(() => this.mockCourses[courseIndex])
+      catchError(error => {
+        console.error('Error updating course:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   deleteCourse(id: string): Observable<boolean> {
-    const courseIndex = this.mockCourses.findIndex(course => course.id === id);
-    
-    if (courseIndex === -1) {
-      return throwError(() => new Error('Course not found'));
+    const user = this.authService.getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return throwError(() => new Error('Only admins can delete courses'));
     }
 
-    return of(true).pipe(
-      delay(500),
-      tap(() => {
-        this.mockCourses.splice(courseIndex, 1);
-        this.coursesSubject.next([...this.mockCourses]);
+    return from(
+      this.supabase.from('courses')
+        .delete()
+        .eq('id', id)
+    ).pipe(
+      map(({ error }) => {
+        if (error) throw error;
+        return true;
+      }),
+      catchError(error => {
+        console.error('Error deleting course:', error);
+        return throwError(() => error);
       })
     );
   }
 
   getCategories(): Observable<string[]> {
-    return this.categories$;
+    return from(
+      this.supabase.from('categories')
+        .select('name')
+        .order('name')
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return data?.map((cat: any) => cat.name) || [];
+      }),
+      catchError(error => {
+        console.error('Error fetching categories:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getInstructors(): Observable<string[]> {
-    return this.courses$.pipe(
-      map(courses => [...new Set(courses.map(course => course.instructor))].sort())
+    return from(
+      this.supabase.from('courses')
+        .select('instructor')
+        .eq('is_published', true)
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        const instructors = [...new Set(data?.map((course: any) => course.instructor) || [])];
+        return instructors.sort();
+      }),
+      catchError(error => {
+        console.error('Error fetching instructors:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   getFeaturedCourses(limit: number = 3): Observable<Course[]> {
-    return this.getAllCourses().pipe(
-      map(courses => 
-        courses
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, limit)
-      )
+    return from(
+      this.supabase.from('courses')
+        .select(`
+          *,
+          categories(name)
+        `)
+        .eq('is_published', true)
+        .order('rating', { ascending: false })
+        .limit(limit)
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return data?.map(this.mapDbCourseToCourse) || [];
+      }),
+      catchError(error => {
+        console.error('Error fetching featured courses:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   getPopularCourses(limit: number = 6): Observable<Course[]> {
-    return this.getAllCourses().pipe(
-      map(courses => 
-        courses
-          .sort((a, b) => b.studentsEnrolled - a.studentsEnrolled)
-          .slice(0, limit)
-      )
+    return from(
+      this.supabase.from('courses')
+        .select(`
+          *,
+          categories(name)
+        `)
+        .eq('is_published', true)
+        .order('students_enrolled', { ascending: false })
+        .limit(limit)
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return data?.map(this.mapDbCourseToCourse) || [];
+      }),
+      catchError(error => {
+        console.error('Error fetching popular courses:', error);
+        return throwError(() => error);
+      })
     );
   }
 
   getCoursesByIds(ids: string[]): Observable<Course[]> {
-    return this.getAllCourses().pipe(
-      map(courses => courses.filter(course => ids.includes(course.id)))
+    return from(
+      this.supabase.from('courses')
+        .select(`
+          *,
+          categories(name)
+        `)
+        .in('id', ids)
+        .eq('is_published', true)
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        return data?.map(this.mapDbCourseToCourse) || [];
+      }),
+      catchError(error => {
+        console.error('Error fetching courses by IDs:', error);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -383,31 +394,61 @@ export class CourseService {
     return this.getAllCourses({ search: query });
   }
 
-  // Statistics methods
   getCourseStats(): Observable<{
     totalCourses: number;
     totalStudents: number;
     averageRating: number;
     categoriesCount: number;
   }> {
-    return this.getAllCourses().pipe(
-      map(courses => ({
-        totalCourses: courses.length,
-        totalStudents: courses.reduce((sum, course) => sum + course.studentsEnrolled, 0),
-        averageRating: courses.reduce((sum, course) => sum + course.rating, 0) / courses.length,
-        categoriesCount: new Set(courses.map(course => course.category)).size
-      }))
+    return from(Promise.all([
+      this.supabase.from('courses').select('rating, students_enrolled', { count: 'exact' }).eq('is_published', true),
+      this.supabase.from('categories').select('*', { count: 'exact' })
+    ])).pipe(
+      map(([coursesResult, categoriesResult]) => {
+        const { data: courses, count: totalCourses, error: coursesError } = coursesResult;
+        const { count: categoriesCount, error: categoriesError } = categoriesResult;
+
+        if (coursesError) throw coursesError;
+        if (categoriesError) throw categoriesError;
+
+        const totalStudents = courses?.reduce((sum: number, course: any) => sum + course.students_enrolled, 0) || 0;
+        const averageRating = courses?.length 
+          ? courses.reduce((sum: number, course: any) => sum + course.rating, 0) / courses.length 
+          : 0;
+
+        return {
+          totalCourses: totalCourses || 0,
+          totalStudents,
+          averageRating: Math.round(averageRating * 10) / 10,
+          categoriesCount: categoriesCount || 0
+        };
+      }),
+      catchError(error => {
+        console.error('Error fetching course stats:', error);
+        return throwError(() => error);
+      })
     );
   }
 
-  // Development helpers
-  addMockCourse(course: Course): void {
-    this.mockCourses.push(course);
-    this.coursesSubject.next([...this.mockCourses]);
-  }
-
-  resetMockData(): void {
-    this.mockCourses = [...this.mockCourses];
-    this.initializeMockData();
+  private mapDbCourseToCourse(dbCourse: any): Course {
+    return {
+      id: dbCourse.id,
+      title: dbCourse.title,
+      description: dbCourse.description,
+      instructor: dbCourse.instructor,
+      duration: dbCourse.duration,
+      category: dbCourse.categories?.name || 'Unknown',
+      level: dbCourse.level,
+      price: dbCourse.price,
+      rating: dbCourse.rating,
+      studentsEnrolled: dbCourse.students_enrolled,
+      image: dbCourse.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop',
+      syllabus: dbCourse.syllabus || [],
+      prerequisites: dbCourse.prerequisites || [],
+      tags: dbCourse.tags || [],
+      createdAt: new Date(dbCourse.created_at),
+      updatedAt: new Date(dbCourse.updated_at),
+      isPublished: dbCourse.is_published
+    };
   }
 }

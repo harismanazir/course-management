@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatBadgeModule } from '@angular/material/badge';
-import { Observable, map, combineLatest } from 'rxjs';
+import { Observable, map, combineLatest, switchMap, of } from 'rxjs';
 
 import { AuthService, User } from '../../../shared/services/auth.service';
 import { CourseService, Course } from '../../../shared/services/course.service';
@@ -38,35 +38,30 @@ export class StudentDashboardComponent implements OnInit {
   enrolledCourses$!: Observable<Course[]>;
   recommendedCourses$!: Observable<Course[]>;
   
-  learningStats$ = combineLatest([
-    this.currentUser$,
-    this.courseService.getAllCourses()
-  ]).pipe(
-    map(([user, allCourses]) => {
-      if (!user || !user.enrolledCourses) {
-        return {
+  learningStats$ = this.authService.getEnrolledCourses().pipe(
+    switchMap((courseIds: string[]) => {
+      if (courseIds.length === 0) {
+        return of({
           totalEnrolled: 0,
           completedCourses: 0,
           inProgressCourses: 0,
           totalHours: 0,
           certificates: 0
-        };
+        });
       }
 
-      const enrolledCourses = allCourses.filter(course => 
-        user.enrolledCourses?.includes(course.id)
+      return this.courseService.getCoursesByIds(courseIds).pipe(
+        map(courses => ({
+          totalEnrolled: courses.length,
+          completedCourses: Math.floor(courses.length * 0.3),
+          inProgressCourses: Math.ceil(courses.length * 0.7),
+          totalHours: courses.reduce((total, course) => {
+            const weeks = parseInt(course.duration.split(' ')[0]) || 0;
+            return total + (weeks * 4);
+          }, 0),
+          certificates: Math.floor(courses.length * 0.3)
+        }))
       );
-
-      return {
-        totalEnrolled: enrolledCourses.length,
-        completedCourses: Math.floor(enrolledCourses.length * 0.3), // Mock completion
-        inProgressCourses: Math.ceil(enrolledCourses.length * 0.7),
-        totalHours: enrolledCourses.reduce((total, course) => {
-          const weeks = parseInt(course.duration.split(' ')[0]) || 0;
-          return total + (weeks * 4); // Assume 4 hours per week
-        }, 0),
-        certificates: Math.floor(enrolledCourses.length * 0.3)
-      };
     })
   );
 
@@ -75,30 +70,23 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   private loadDashboardData(): void {
-    // Load enrolled courses
-    this.enrolledCourses$ = combineLatest([
-      this.currentUser$,
-      this.courseService.getAllCourses()
-    ]).pipe(
-      map(([user, allCourses]) => {
-        if (!user || !user.enrolledCourses) return [];
-        return allCourses.filter(course => 
-          user.enrolledCourses?.includes(course.id)
-        );
-      })
+    // Load enrolled courses with real data
+    this.enrolledCourses$ = this.authService.getEnrolledCourses().pipe(
+      switchMap((courseIds: string[]) => 
+        courseIds.length > 0 
+          ? this.courseService.getCoursesByIds(courseIds)
+          : of([])
+      )
     );
 
-    // Load recommended courses (courses not enrolled in)
+    // Load recommended courses (exclude enrolled ones)
     this.recommendedCourses$ = combineLatest([
-      this.currentUser$,
+      this.authService.getEnrolledCourses(),
       this.courseService.getPopularCourses(6)
     ]).pipe(
-      map(([user, popularCourses]) => {
-        if (!user || !user.enrolledCourses) return popularCourses;
-        return popularCourses.filter(course => 
-          !user.enrolledCourses?.includes(course.id)
-        );
-      })
+      map(([enrolledIds, popularCourses]) => 
+        popularCourses.filter(course => !enrolledIds.includes(course.id))
+      )
     );
   }
 

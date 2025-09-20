@@ -30,13 +30,10 @@ export class CourseCardComponent {
   @Input() course!: Course;
   @Input() showActions = true;
   @Input() showEnrollButton = true;
+  @Input() isEnrolled = false;
 
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
-
-  get isEnrolled(): boolean {
-    return this.authService.isEnrolledInCourse(this.course.id);
-  }
 
   get currentUser() {
     return this.authService.getCurrentUser();
@@ -97,6 +94,7 @@ export class CourseCardComponent {
       this.authService.unenrollFromCourse(this.course.id).subscribe({
         next: () => {
           this.notificationService.success('Successfully unenrolled from course');
+          this.isEnrolled = false;
         },
         error: (error) => {
           this.notificationService.error('Failed to unenroll from course');
@@ -106,6 +104,7 @@ export class CourseCardComponent {
       this.authService.enrollInCourse(this.course.id).subscribe({
         next: () => {
           this.notificationService.success('Successfully enrolled in course!');
+          this.isEnrolled = true;
         },
         error: (error) => {
           this.notificationService.error('Failed to enroll in course');

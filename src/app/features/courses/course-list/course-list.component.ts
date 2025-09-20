@@ -50,11 +50,14 @@ export class CourseListComponent implements OnInit {
   
   private isLoadingSubject = new BehaviorSubject<boolean>(true);
   isLoading$ = this.isLoadingSubject.asObservable();
+  
+  private enrolledCourseIds: string[] = [];
 
   ngOnInit() {
     this.initializeForm();
     this.loadData();
     this.setupFiltering();
+    this.loadEnrollments();
   }
 
   private initializeForm(): void {
@@ -72,6 +75,14 @@ export class CourseListComponent implements OnInit {
     this.courses$ = this.courseService.getAllCourses();
     this.categories$ = this.courseService.getCategories();
     this.instructors$ = this.courseService.getInstructors();
+  }
+
+  private loadEnrollments(): void {
+    if (this.authService.isStudent()) {
+      this.authService.getEnrolledCourses().subscribe(courseIds => {
+        this.enrolledCourseIds = courseIds;
+      });
+    }
   }
 
   private setupFiltering(): void {
@@ -126,6 +137,10 @@ export class CourseListComponent implements OnInit {
         return filtered;
       })
     );
+  }
+
+  isEnrolled(courseId: string): boolean {
+    return this.enrolledCourseIds.includes(courseId);
   }
 
   clearFilters(): void {

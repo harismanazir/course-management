@@ -108,13 +108,14 @@
       </button>
     </div>
 
-    <div class="courses-grid grid grid-3" *ngIf="featuredCourses$ | async as courses">
-      <app-course-card 
-        *ngFor="let course of courses; trackBy: trackByCourse" 
-        [course]="course"
-        class="fade-in-up">
-      </app-course-card>
-    </div>
+<div class="courses-grid grid grid-3" *ngIf="featuredCourses$ | async as courses">
+  <app-course-card 
+    *ngFor="let course of courses; trackBy: trackByCourse" 
+    [course]="course"
+    [isEnrolled]="false"
+    class="fade-in-up">
+  </app-course-card>
+</div>
 
     <!-- Empty State -->
     <div class="empty-state" *ngIf="(featuredCourses$ | async)?.length === 0">

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { SupabaseService } from './supabase.service';
 
 export interface User {
   id: string;
@@ -9,7 +10,6 @@ export interface User {
   name: string;
   role: 'student' | 'admin';
   avatar?: string;
-  enrolledCourses?: string[];
   createdAt: Date;
 }
 
@@ -35,128 +35,135 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
-  // Mock users for development
-  private mockUsers: User[] = [
-    {
-      id: '1',
-      email: 'admin@courseapp.com',
-      name: 'Admin User',
-      role: 'admin',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-      enrolledCourses: [],
-      createdAt: new Date('2023-01-15')
-    },
-    {
-      id: '2',
-      email: 'student@courseapp.com',
-      name: 'John Student',
-      role: 'student',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-      enrolledCourses: ['1', '3'],
-      createdAt: new Date('2023-02-20')
-    },
-    {
-      id: '3',
-      email: 'jane.doe@courseapp.com',
-      name: 'Jane Doe',
-      role: 'student',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-      enrolledCourses: ['2'],
-      createdAt: new Date('2023-03-10')
-    }
-  ];
-
-  constructor(private router: Router) {
-    this.checkAuthState();
+  constructor(
+    private router: Router,
+    private supabase: SupabaseService
+  ) {
+    this.initializeAuthState();
   }
 
-  private checkAuthState(): void {
-    const savedUser = localStorage.getItem('currentUser');
-    const token = localStorage.getItem('authToken');
-    
-    if (savedUser && token) {
-      const user = JSON.parse(savedUser);
+  private async initializeAuthState() {
+    const { data: { session } } = await this.supabase.auth.getSession();
+    if (session?.user) {
+      await this.setCurrentUser(session.user.id);
+    }
+
+    // Listen for auth changes
+    this.supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await this.setCurrentUser(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        this.currentUserSubject.next(null);
+        this.isLoggedInSubject.next(false);
+      }
+    });
+  }
+
+  private async setCurrentUser(userId: string) {
+    const { data: profile } = await this.supabase.from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      const user: User = {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        role: profile.role as 'student' | 'admin',
+        avatar: profile.avatar || undefined,
+        createdAt: new Date(profile.created_at)
+      };
+      
       this.currentUserSubject.next(user);
       this.isLoggedInSubject.next(true);
     }
   }
 
   login(credentials: LoginCredentials): Observable<User> {
-    const user = this.mockUsers.find(u => u.email === credentials.email);
-    
-    if (!user) {
-      return throwError(() => new Error('User not found'));
-    }
-
-    // In real app, verify password hash
-    const validPasswords: { [key: string]: string } = {
-      'admin@courseapp.com': 'admin123',
-      'student@courseapp.com': 'student123',
-      'jane.doe@courseapp.com': 'password123'
-    };
-
-    if (validPasswords[credentials.email] !== credentials.password) {
-      return throwError(() => new Error('Invalid credentials'));
-    }
-
-    // Simulate API call
-    return of(user).pipe(
-      delay(1000),
-      tap((authenticatedUser) => {
-        // Generate mock token
-        const token = this.generateToken(authenticatedUser);
+    return from(
+      this.supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
+      })
+    ).pipe(
+      switchMap(({ data, error }) => {
+        if (error) throw error;
+        if (!data.user) throw new Error('No user returned');
         
-        // Store in localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUser', JSON.stringify(authenticatedUser));
-        
-        // Update subjects
-        this.currentUserSubject.next(authenticatedUser);
+        return this.getUserProfile(data.user.id);
+      }),
+      tap(user => {
+        this.currentUserSubject.next(user);
         this.isLoggedInSubject.next(true);
+      }),
+      catchError(error => {
+        console.error('Login error:', error);
+        return throwError(() => new Error(error.message || 'Login failed'));
       })
     );
   }
 
   register(registerData: RegisterData): Observable<User> {
-    // Check if user already exists
-    const existingUser = this.mockUsers.find(u => u.email === registerData.email);
-    if (existingUser) {
-      return throwError(() => new Error('User already exists'));
-    }
+    return from(
+      this.supabase.auth.signUp({
+        email: registerData.email,
+        password: registerData.password,
+      })
+    ).pipe(
+      switchMap(({ data, error }) => {
+        if (error) throw error;
+        if (!data.user) throw new Error('Registration failed');
 
-    // Create new user
-    const newUser: User = {
-      id: Date.now().toString(),
-      email: registerData.email,
-      name: registerData.name,
-      role: registerData.role || 'student',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(registerData.name)}&background=667eea&color=fff&size=150`,
-      enrolledCourses: [],
-      createdAt: new Date()
-    };
-
-    // Add to mock users
-    this.mockUsers.push(newUser);
-
-    // Simulate API call
-    return of(newUser).pipe(
-      delay(1000),
-      tap((user) => {
-        // Generate token and store
-        const token = this.generateToken(user);
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-
-        // Update subjects
+        // Create profile
+        return from(
+          this.supabase.from('profiles').insert({
+            id: data.user.id,
+            email: registerData.email,
+            name: registerData.name,
+            role: registerData.role || 'student',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(registerData.name)}&background=667eea&color=fff&size=150`
+          } as any)
+        ).pipe(
+          switchMap(() => this.getUserProfile(data.user!.id))
+        );
+      }),
+      tap(user => {
         this.currentUserSubject.next(user);
         this.isLoggedInSubject.next(true);
+      }),
+      catchError(error => {
+        console.error('Registration error:', error);
+        return throwError(() => new Error(error.message || 'Registration failed'));
       })
     );
   }
 
-  logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
+  private getUserProfile(userId: string): Observable<User> {
+    return from(
+      this.supabase.from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        if (!data) throw new Error('Profile not found');
+
+        return {
+          id: data.id,
+          email: data.email,
+          name: data.name,
+          role: data.role as 'student' | 'admin',
+          avatar: data.avatar || undefined,
+          createdAt: new Date(data.created_at)
+        };
+      })
+    );
+  }
+
+  async logout(): Promise<void> {
+    await this.supabase.auth.signOut();
     this.currentUserSubject.next(null);
     this.isLoggedInSubject.next(false);
     this.router.navigate(['/']);
@@ -167,7 +174,8 @@ export class AuthService {
   }
 
   getAuthToken(): string | null {
-    return localStorage.getItem('authToken');
+    // This method is not needed with Supabase, but keeping for compatibility
+    return null;
   }
 
   isAdmin(): boolean {
@@ -186,47 +194,77 @@ export class AuthService {
       return throwError(() => new Error('Only students can enroll in courses'));
     }
 
-    return of(true).pipe(
-      delay(500),
-      tap(() => {
-        if (!user.enrolledCourses) {
-          user.enrolledCourses = [];
-        }
-        
-        if (!user.enrolledCourses.includes(courseId)) {
-          user.enrolledCourses.push(courseId);
-          
-          // Update localStorage and subject
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          this.currentUserSubject.next(user);
-        }
+    return from(
+      this.supabase.from('enrollments').insert({
+        user_id: user.id,
+        course_id: courseId,
+        progress: 0
+      } as any)
+    ).pipe(
+      switchMap(() => 
+        // Update students_enrolled count
+        from(this.supabase.client.rpc('increment_students_enrolled', { course_id: courseId }))
+      ),
+      map(() => true),
+      catchError(error => {
+        console.error('Enrollment error:', error);
+        return throwError(() => new Error('Failed to enroll in course'));
       })
     );
   }
 
   unenrollFromCourse(courseId: string): Observable<boolean> {
     const user = this.getCurrentUser();
-    if (!user || user.role !== 'student') {
-      return throwError(() => new Error('Only students can unenroll from courses'));
+    if (!user) {
+      return throwError(() => new Error('User not logged in'));
     }
 
-    return of(true).pipe(
-      delay(500),
-      tap(() => {
-        if (user.enrolledCourses) {
-          user.enrolledCourses = user.enrolledCourses.filter(id => id !== courseId);
-          
-          // Update localStorage and subject
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          this.currentUserSubject.next(user);
-        }
+    return from(
+      this.supabase.from('enrollments')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+    ).pipe(
+      switchMap(() => 
+        // Decrement students_enrolled count
+        from(this.supabase.client.rpc('decrement_students_enrolled', { course_id: courseId }))
+      ),
+      map(() => true),
+      catchError(error => {
+        console.error('Unenrollment error:', error);
+        return throwError(() => new Error('Failed to unenroll from course'));
       })
     );
   }
 
-  isEnrolledInCourse(courseId: string): boolean {
+  isEnrolledInCourse(courseId: string): Observable<boolean> {
     const user = this.getCurrentUser();
-    return user?.enrolledCourses?.includes(courseId) || false;
+    if (!user) return of(false);
+
+    return from(
+      this.supabase.from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .single()
+    ).pipe(
+      map(({ data }) => !!data),
+      catchError(() => of(false))
+    );
+  }
+
+  getEnrolledCourses(): Observable<string[]> {
+    const user = this.getCurrentUser();
+    if (!user) return of([]);
+
+    return from(
+      this.supabase.from('enrollments')
+        .select('course_id')
+        .eq('user_id', user.id)
+    ).pipe(
+      map(({ data }) => data?.map((enrollment: any) => enrollment.course_id) || []),
+      catchError(() => of([]))
+    );
   }
 
   updateProfile(updates: Partial<User>): Observable<User> {
@@ -235,82 +273,37 @@ export class AuthService {
       return throwError(() => new Error('No user logged in'));
     }
 
-    const updatedUser = { ...user, ...updates };
-    
-    // Update in mock users array
-    const userIndex = this.mockUsers.findIndex(u => u.id === user.id);
-    if (userIndex !== -1) {
-      this.mockUsers[userIndex] = updatedUser;
-    }
-
-    return of(updatedUser).pipe(
-      delay(500),
-      tap((updated) => {
-        // Update localStorage and subject
-        localStorage.setItem('currentUser', JSON.stringify(updated));
-        this.currentUserSubject.next(updated);
+    return from(
+      this.supabase.from('profiles')
+        .update({
+          name: updates.name,
+          avatar: updates.avatar
+        } as any)
+        .eq('id', user.id)
+        .select()
+        .single()
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) throw error;
+        
+        const updatedUser: User = {
+          ...user,
+          name: data.name,
+          avatar: data.avatar || undefined
+        };
+        
+        this.currentUserSubject.next(updatedUser);
+        return updatedUser;
+      }),
+      catchError(error => {
+        console.error('Profile update error:', error);
+        return throwError(() => new Error('Failed to update profile'));
       })
     );
   }
 
-  private generateToken(user: User): string {
-    // Simple mock token generation
-    const payload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-    };
-    
-    return btoa(JSON.stringify(payload));
-  }
-
   validateToken(): boolean {
-    const token = this.getAuthToken();
-    if (!token) return false;
-
-    try {
-      const payload = JSON.parse(atob(token));
-      return payload.exp > Date.now();
-    } catch {
-      return false;
-    }
-  }
-
-  // Development helper methods
-  getMockUsers(): User[] {
-    return this.mockUsers;
-  }
-
-  resetMockData(): void {
-    this.mockUsers = [
-      {
-        id: '1',
-        email: 'admin@courseapp.com',
-        name: 'Admin User',
-        role: 'admin',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-        enrolledCourses: [],
-        createdAt: new Date('2023-01-15')
-      },
-      {
-        id: '2',
-        email: 'student@courseapp.com',
-        name: 'John Student',
-        role: 'student',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-        enrolledCourses: ['1', '3'],
-        createdAt: new Date('2023-02-20')
-      },
-      {
-        id: '3',
-        email: 'jane.doe@courseapp.com',
-        name: 'Jane Doe',
-        role: 'student',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-        enrolledCourses: ['2'],
-        createdAt: new Date('2023-03-10')
-      }
-    ];
+    // With Supabase, we rely on the auth state listener
+    return this.isLoggedInSubject.value;
   }
 }

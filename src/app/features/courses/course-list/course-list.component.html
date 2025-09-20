@@ -112,14 +112,16 @@
       </div>
 
       <!-- Courses Grid -->
-      <div class="courses-grid grid grid-3" 
-           *ngIf="!(isLoading$ | async) && (filteredCourses$ | async) as courses">
-        <app-course-card 
-          *ngFor="let course of courses; trackBy: trackByCourse" 
-          [course]="course"
-          class="fade-in-up">
-        </app-course-card>
-      </div>
+      
+<div class="courses-grid grid grid-3" 
+     *ngIf="!(isLoading$ | async) && (filteredCourses$ | async) as courses">
+  <app-course-card 
+    *ngFor="let course of courses; trackBy: trackByCourse" 
+    [course]="course"
+    [isEnrolled]="isEnrolled(course.id)"
+    class="fade-in-up">
+  </app-course-card>
+</div>
 
       <!-- No Results -->
       <div class="empty-state" 
