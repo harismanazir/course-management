@@ -1,0 +1,337 @@
+.course-form-page {
+  min-height: calc(100vh - 64px);
+  background: var(--background-light);
+}
+
+.page-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 40px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="30" cy="30" r="2"/></g></g></svg>');
+  opacity: 0.3;
+}
+
+.breadcrumb {
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.breadcrumb-link {
+  color: rgba(255, 255, 255, 0.9) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.breadcrumb-link:hover {
+  color: white !important;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.form-content {
+  padding: 40px 0 80px;
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-card {
+  background: var(--background-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-large);
+  margin-top: -30px;
+  position: relative;
+  z-index: 2;
+}
+
+.form-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.form-card mat-card-title mat-icon {
+  color: var(--primary-color);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.course-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 20px 0;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.section-description {
+  color: var(--text-medium);
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Array Sections */
+.array-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.array-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.array-field {
+  flex: 1;
+}
+
+.remove-btn {
+  color: var(--error-color) !important;
+  margin-top: 8px;
+}
+
+.remove-btn:disabled {
+  color: var(--text-light) !important;
+  opacity: 0.5;
+}
+
+.add-btn {
+  color: var(--primary-color) !important;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.add-btn:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Publishing Settings */
+.publish-checkbox {
+  margin: 8px 0;
+}
+
+.publish-checkbox .mdc-form-field {
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  color: var(--text-medium) !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+.submit-btn {
+  padding: 12px 32px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+}
+
+.submit-btn mat-spinner {
+  margin-right: 8px;
+}
+
+/* Error Styling */
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+  border-color: var(--error-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 20px 0;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .form-container {
+    margin: 0 16px;
+  }
+
+  .form-card {
+    margin-top: -20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .course-form {
+    gap: 24px;
+  }
+
+  .form-section {
+    gap: 16px;
+  }
+
+  .array-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .remove-btn {
+    align-self: flex-end;
+    margin-top: 0;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-content {
+    padding: 20px 0 60px;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .form-card mat-card-content {
+    padding: 16px !important;
+  }
+
+  .course-form {
+    gap: 20px;
+  }
+
+  .form-section h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Animation */
+.form-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states */
+.mat-mdc-form-field:focus-within {
+  transform: translateY(-2px);
+  transition: transform 0.3s ease;
+}
+
+/* Custom styling for select options */
+.mat-mdc-select-panel {
+  border-radius: 8px;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Hover effects */
+.array-item:hover .remove-btn {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.add-btn:hover mat-icon {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}

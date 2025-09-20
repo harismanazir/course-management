@@ -1,0 +1,270 @@
+<div class="student-dashboard">
+  <!-- Welcome Header -->
+  <div class="dashboard-header">
+    <div class="container">
+      <div class="welcome-section" *ngIf="currentUser$ | async as user">
+        <div class="welcome-content">
+          <div class="user-info">
+            <img [src]="user.avatar" [alt]="user.name" class="user-avatar" *ngIf="user.avatar">
+            <div class="user-details">
+              <h1>Welcome back, {{user.name}}!</h1>
+              <p>Continue your learning journey and explore new courses</p>
+            </div>
+          </div>
+          
+          <div class="quick-actions">
+            <button mat-raised-button routerLink="/courses" class="btn-gradient">
+              <mat-icon>explore</mat-icon>
+              Browse Courses
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Learning Stats -->
+  <div class="stats-section">
+    <div class="container">
+      <div class="stats-grid" *ngIf="learningStats$ | async as stats">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon enrolled">
+                <mat-icon>school</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.totalEnrolled}}</h3>
+                <p>Enrolled Courses</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon completed">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.completedCourses}}</h3>
+                <p>Completed</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon progress">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.inProgressCourses}}</h3>
+                <p>In Progress</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon hours">
+                <mat-icon>schedule</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.totalHours}}</h3>
+                <p>Learning Hours</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <div class="container">
+      <mat-tab-group class="dashboard-tabs">
+        <!-- My Courses Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>library_books</mat-icon>
+            My Courses
+            <span class="tab-badge" *ngIf="(enrolledCourses$ | async)?.length as count" [matBadge]="count"></span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <!-- Enrolled Courses -->
+            <div class="courses-section" *ngIf="enrolledCourses$ | async as courses">
+              <div class="section-header">
+                <h2>Your Enrolled Courses</h2>
+                <p>Continue learning and track your progress</p>
+              </div>
+
+              <div class="enrolled-courses-grid" *ngIf="courses.length > 0">
+                <mat-card class="enrolled-course-card" *ngFor="let course of courses">
+                  <div class="course-image-container">
+                    <img [src]="course.image" [alt]="course.title" class="course-image">
+                    <div class="progress-overlay">
+                      <mat-progress-bar 
+                        mode="determinate" 
+                        [value]="getProgressPercentage(course)"
+                        [color]="getStatusColor(getCourseStatus(course))">
+                      </mat-progress-bar>
+                    </div>
+                  </div>
+                  
+                  <mat-card-content>
+                    <div class="course-header">
+                      <h3 [routerLink]="['/courses', course.id]" class="course-title">
+                        {{course.title}}
+                      </h3>
+                      <span class="course-status" [ngClass]="getCourseStatus(course).toLowerCase().replace(' ', '-')">
+                        {{getCourseStatus(course)}}
+                      </span>
+                    </div>
+                    
+                    <p class="course-instructor">{{course.instructor}}</p>
+                    
+                    <div class="course-progress">
+                      <div class="progress-info">
+                        <span class="progress-text">{{getProgressPercentage(course)}}% Complete</span>
+                        <span class="progress-duration">{{course.duration}}</span>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                  
+                  <mat-card-actions>
+                    <button mat-button [routerLink]="['/courses', course.id]" class="continue-btn">
+                      <mat-icon>play_circle_filled</mat-icon>
+                      Continue Learning
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+              </div>
+
+              <!-- No Enrolled Courses -->
+              <div class="empty-state" *ngIf="courses.length === 0">
+                <mat-icon>school</mat-icon>
+                <h3>No Enrolled Courses</h3>
+                <p>Start your learning journey by enrolling in a course</p>
+                <button mat-raised-button routerLink="/courses" class="btn-gradient">
+                  <mat-icon>explore</mat-icon>
+                  Browse Courses
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Recommended Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>recommend</mat-icon>
+            Recommended
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="courses-section" *ngIf="recommendedCourses$ | async as courses">
+              <div class="section-header">
+                <h2>Recommended for You</h2>
+                <p>Discover courses that match your interests</p>
+              </div>
+
+              <div class="recommended-courses-grid" *ngIf="courses.length > 0">
+                <app-course-card 
+                  *ngFor="let course of courses" 
+                  [course]="course"
+                  [showEnrollButton]="true">
+                </app-course-card>
+              </div>
+
+              <!-- No Recommendations -->
+              <div class="empty-state" *ngIf="courses.length === 0">
+                <mat-icon>lightbulb</mat-icon>
+                <h3>No Recommendations</h3>
+                <p>Enroll in more courses to get personalized recommendations</p>
+                <button mat-raised-button routerLink="/courses" class="btn-gradient">
+                  <mat-icon>explore</mat-icon>
+                  Explore All Courses
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Profile Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>person</mat-icon>
+            Profile
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="profile-section" *ngIf="currentUser$ | async as user">
+              <div class="section-header">
+                <h2>Your Profile</h2>
+                <p>Manage your account settings and preferences</p>
+              </div>
+
+              <div class="profile-content">
+                <mat-card class="profile-card">
+                  <mat-card-content>
+                    <div class="profile-info">
+                      <div class="profile-avatar">
+                        <img [src]="user.avatar" [alt]="user.name" *ngIf="user.avatar">
+                        <mat-icon *ngIf="!user.avatar">account_circle</mat-icon>
+                      </div>
+                      
+                      <div class="profile-details">
+                        <h3>{{user.name}}</h3>
+                        <p>{{user.email}}</p>
+                        <span class="user-role">{{user.role | titlecase}} Account</span>
+                        <p class="member-since">Member since {{user.createdAt | date:'MMMM yyyy'}}</p>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                  
+                  <mat-card-actions>
+                    <button mat-button routerLink="/profile">
+                      <mat-icon>edit</mat-icon>
+                      Edit Profile
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+
+                <!-- Achievement Cards -->
+                <div class="achievements-grid" *ngIf="learningStats$ | async as stats">
+                  <mat-card class="achievement-card">
+                    <mat-card-content>
+                      <div class="achievement-icon">
+                        <mat-icon>emoji_events</mat-icon>
+                      </div>
+                      <h4>{{stats.certificates}}</h4>
+                      <p>Certificates Earned</p>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="achievement-card">
+                    <mat-card-content>
+                      <div class="achievement-icon">
+                        <mat-icon>timer</mat-icon>
+                      </div>
+                      <h4>{{stats.totalHours}}</h4>
+                      <p>Hours Learned</p>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+</div>

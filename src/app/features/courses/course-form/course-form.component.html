@@ -1,0 +1,274 @@
+<div class="course-form-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb">
+        <a routerLink="/courses" mat-button class="breadcrumb-link">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Courses
+        </a>
+      </div>
+      <h1>{{isEditMode ? 'Edit Course' : 'Create New Course'}}</h1>
+      <p>{{isEditMode ? 'Update course information' : 'Fill in the details to create a new course'}}</p>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <div class="form-content">
+    <div class="container">
+      <div class="form-container">
+        <mat-card class="form-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>{{isEditMode ? 'edit' : 'add'}}</mat-icon>
+              Course Information
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <form [formGroup]="courseForm" (ngSubmit)="onSubmit()" class="course-form">
+              <!-- Basic Information -->
+              <div class="form-section">
+                <h3>Basic Information</h3>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Course Title</mat-label>
+                    <input matInput 
+                           formControlName="title"
+                           placeholder="Enter course title">
+                    <mat-error *ngIf="courseForm.get('title')?.touched && courseForm.get('title')?.invalid">
+                      {{getErrorMessage('title')}}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Course Description</mat-label>
+                    <textarea matInput 
+                              formControlName="description"
+                              placeholder="Describe what students will learn in this course"
+                              rows="4">
+                    </textarea>
+                    <mat-error *ngIf="courseForm.get('description')?.touched && courseForm.get('description')?.invalid">
+                      {{getErrorMessage('description')}}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Instructor Name</mat-label>
+                    <input matInput 
+                           formControlName="instructor"
+                           placeholder="Enter instructor name">
+                    <mat-error *ngIf="courseForm.get('instructor')?.touched && courseForm.get('instructor')?.invalid">
+                      {{getErrorMessage('instructor')}}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Duration</mat-label>
+                    <input matInput 
+                           formControlName="duration"
+                           placeholder="e.g., 8 weeks, 3 months">
+                    <mat-error *ngIf="courseForm.get('duration')?.touched && courseForm.get('duration')?.invalid">
+                      {{getErrorMessage('duration')}}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Category</mat-label>
+                    <mat-select formControlName="category">
+                      <mat-option *ngFor="let category of categories$ | async" [value]="category">
+                        {{category}}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="courseForm.get('category')?.touched && courseForm.get('category')?.invalid">
+                      {{getErrorMessage('category')}}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Level</mat-label>
+                    <mat-select formControlName="level">
+                      <mat-option *ngFor="let level of levels" [value]="level">
+                        {{level}}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="courseForm.get('level')?.touched && courseForm.get('level')?.invalid">
+                      {{getErrorMessage('level')}}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Price ($)</mat-label>
+                    <input matInput 
+                           type="number"
+                           formControlName="price"
+                           placeholder="0">
+                    <mat-hint>Enter 0 for free courses</mat-hint>
+                    <mat-error *ngIf="courseForm.get('price')?.touched && courseForm.get('price')?.invalid">
+                      {{getErrorMessage('price')}}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Course Image URL</mat-label>
+                    <input matInput 
+                           formControlName="image"
+                           placeholder="https://example.com/image.jpg">
+                    <mat-error *ngIf="courseForm.get('image')?.touched && courseForm.get('image')?.invalid">
+                      {{getErrorMessage('image')}}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Course Syllabus -->
+              <div class="form-section">
+                <h3>Course Syllabus</h3>
+                <p class="section-description">What will students learn? Add course modules or topics.</p>
+                
+                <div formArrayName="syllabus" class="array-section">
+                  <div *ngFor="let item of syllabusArray.controls; let i = index" class="array-item">
+                    <mat-form-field appearance="outline" class="array-field">
+                      <mat-label>Module {{i + 1}}</mat-label>
+                      <input matInput 
+                             [formControlName]="i"
+                             placeholder="Enter module title or topic">
+                      <mat-error *ngIf="syllabusArray.at(i)?.touched && syllabusArray.at(i)?.invalid">
+                        {{getErrorMessage('syllabus', i)}}
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <button mat-icon-button 
+                            type="button"
+                            (click)="removeSyllabusItem(i)"
+                            [disabled]="syllabusArray.length <= 1"
+                            class="remove-btn">
+                      <mat-icon>remove_circle</mat-icon>
+                    </button>
+                  </div>
+                  
+                  <button mat-button 
+                          type="button"
+                          (click)="addSyllabusItem()"
+                          class="add-btn">
+                    <mat-icon>add</mat-icon>
+                    Add Module
+                  </button>
+                </div>
+              </div>
+
+              <!-- Prerequisites -->
+              <div class="form-section">
+                <h3>Prerequisites</h3>
+                <p class="section-description">What should students know before taking this course?</p>
+                
+                <div formArrayName="prerequisites" class="array-section">
+                  <div *ngFor="let item of prerequisitesArray.controls; let i = index" class="array-item">
+                    <mat-form-field appearance="outline" class="array-field">
+                      <mat-label>Prerequisite {{i + 1}}</mat-label>
+                      <input matInput 
+                             [formControlName]="i"
+                             placeholder="Enter prerequisite knowledge or skill">
+                      <mat-error *ngIf="prerequisitesArray.at(i)?.touched && prerequisitesArray.at(i)?.invalid">
+                        {{getErrorMessage('prerequisites', i)}}
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <button mat-icon-button 
+                            type="button"
+                            (click)="removePrerequisiteItem(i)"
+                            [disabled]="prerequisitesArray.length <= 1"
+                            class="remove-btn">
+                      <mat-icon>remove_circle</mat-icon>
+                    </button>
+                  </div>
+                  
+                  <button mat-button 
+                          type="button"
+                          (click)="addPrerequisiteItem()"
+                          class="add-btn">
+                    <mat-icon>add</mat-icon>
+                    Add Prerequisite
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <div class="form-section">
+                <h3>Course Tags</h3>
+                <p class="section-description">Add relevant tags to help students find this course.</p>
+                
+                <div formArrayName="tags" class="array-section">
+                  <div *ngFor="let item of tagsArray.controls; let i = index" class="array-item">
+                    <mat-form-field appearance="outline" class="array-field">
+                      <mat-label>Tag {{i + 1}}</mat-label>
+                      <input matInput 
+                             [formControlName]="i"
+                             placeholder="Enter a relevant tag">
+                      <mat-error *ngIf="tagsArray.at(i)?.touched && tagsArray.at(i)?.invalid">
+                        {{getErrorMessage('tags', i)}}
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <button mat-icon-button 
+                            type="button"
+                            (click)="removeTagItem(i)"
+                            [disabled]="tagsArray.length <= 1"
+                            class="remove-btn">
+                      <mat-icon>remove_circle</mat-icon>
+                    </button>
+                  </div>
+                  
+                  <button mat-button 
+                          type="button"
+                          (click)="addTagItem()"
+                          class="add-btn">
+                    <mat-icon>add</mat-icon>
+                    Add Tag
+                  </button>
+                </div>
+              </div>
+
+              <!-- Publishing Settings -->
+              <div class="form-section">
+                <h3>Publishing Settings</h3>
+                
+                <mat-checkbox formControlName="isPublished" class="publish-checkbox">
+                  Publish this course immediately
+                </mat-checkbox>
+              </div>
+
+              <!-- Form Actions -->
+              <div class="form-actions">
+                <button mat-button 
+                        type="button"
+                        (click)="onCancel()"
+                        class="cancel-btn">
+                  Cancel
+                </button>
+                
+                <button mat-raised-button 
+                        type="submit"
+                        [disabled]="isLoading"
+                        class="btn-gradient submit-btn">
+                  <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+                  <mat-icon *ngIf="!isLoading">{{isEditMode ? 'save' : 'add'}}</mat-icon>
+                  <span>{{isLoading ? 'Saving...' : (isEditMode ? 'Update Course' : 'Create Course')}}</span>
+                </button>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

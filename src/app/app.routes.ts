@@ -25,5 +25,56 @@ export const routes: Routes = [
       }
     ]
   },
-  
+  {
+    path: 'courses',
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/courses/course-list/course-list.component').then(m => m.CourseListComponent)
+      },
+      {
+        path: 'add',
+        loadComponent: () => import('./features/courses/course-form/course-form.component').then(m => m.CourseFormComponent),
+        canActivate: [authGuard, adminGuard]
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () => import('./features/courses/course-form/course-form.component').then(m => m.CourseFormComponent),
+        canActivate: [authGuard, adminGuard]
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./features/courses/course-detail/course-detail.component').then(m => m.CourseDetailComponent)
+      }
+    ]
+  },
+  {
+    path: 'dashboard',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'student',
+        loadComponent: () => import('./features/dashboard/student-dashboard/student-dashboard.component').then(m => m.StudentDashboardComponent)
+      },
+      {
+        path: 'admin',
+        loadComponent: () => import('./features/dashboard/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+        canActivate: [adminGuard]
+      },
+      {
+        path: '',
+        redirectTo: 'student',
+        pathMatch: 'full'
+      }
+    ]
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: '**',
+    redirectTo: ''
+  }
 ];

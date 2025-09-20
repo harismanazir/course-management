@@ -1,0 +1,139 @@
+<div class="courses-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Explore Our Courses</h1>
+      <p>Discover thousands of courses to advance your skills and career</p>
+      
+      <!-- Add Course Button for Admins -->
+      <div class="header-actions" *ngIf="authService.isAdmin()">
+        <button mat-raised-button 
+                routerLink="/courses/add" 
+                class="btn-gradient">
+          <mat-icon>add</mat-icon>
+          Add New Course
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="container">
+      <mat-card class="filters-card">
+        <form [formGroup]="filtersForm" class="filters-form">
+          <div class="filters-row">
+            <!-- Search -->
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Search courses</mat-label>
+              <input matInput 
+                     formControlName="search"
+                     placeholder="Course title, instructor, or topic">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <!-- Category Filter -->
+            <mat-form-field appearance="outline">
+              <mat-label>Category</mat-label>
+              <mat-select formControlName="category">
+                <mat-option value="">All Categories</mat-option>
+                <mat-option *ngFor="let category of categories$ | async" [value]="category">
+                  {{category}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Level Filter -->
+            <mat-form-field appearance="outline">
+              <mat-label>Level</mat-label>
+              <mat-select formControlName="level">
+                <mat-option value="">All Levels</mat-option>
+                <mat-option value="Beginner">Beginner</mat-option>
+                <mat-option value="Intermediate">Intermediate</mat-option>
+                <mat-option value="Advanced">Advanced</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Instructor Filter -->
+            <mat-form-field appearance="outline">
+              <mat-label>Instructor</mat-label>
+              <mat-select formControlName="instructor">
+                <mat-option value="">All Instructors</mat-option>
+                <mat-option *ngFor="let instructor of instructors$ | async" [value]="instructor">
+                  {{instructor}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Price Range -->
+          <div class="price-filter">
+            <label>Price Range: ${{filtersForm.get('minPrice')?.value || 0}} - ${{filtersForm.get('maxPrice')?.value || 500}}</label>
+            <div class="price-sliders">
+              <mat-slider min="0" max="500" step="10" discrete>
+                <input matSliderStartThumb formControlName="minPrice">
+                <input matSliderEndThumb formControlName="maxPrice">
+              </mat-slider>
+            </div>
+          </div>
+
+          <!-- Clear Filters Button -->
+          <div class="filter-actions">
+            <button mat-button 
+                    type="button"
+                    (click)="clearFilters()"
+                    class="clear-filters-btn">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section">
+    <div class="container">
+      <!-- Results Header -->
+      <div class="results-header">
+        <h2>
+          <span *ngIf="!(isLoading$ | async)">
+            {{(filteredCourses$ | async)?.length || 0}} courses found
+          </span>
+          <span *ngIf="isLoading$ | async">Searching courses...</span>
+        </h2>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-container" *ngIf="isLoading$ | async">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading courses...</p>
+      </div>
+
+      <!-- Courses Grid -->
+      <div class="courses-grid grid grid-3" 
+           *ngIf="!(isLoading$ | async) && (filteredCourses$ | async) as courses">
+        <app-course-card 
+          *ngFor="let course of courses; trackBy: trackByCourse" 
+          [course]="course"
+          class="fade-in-up">
+        </app-course-card>
+      </div>
+
+      <!-- No Results -->
+      <div class="empty-state" 
+           *ngIf="!(isLoading$ | async) && (filteredCourses$ | async)?.length === 0">
+        <mat-icon>search_off</mat-icon>
+        <h3>No courses found</h3>
+        <p>Try adjusting your search criteria or browse all courses</p>
+        <button mat-raised-button 
+                (click)="clearFilters()" 
+                class="btn-gradient">
+          <mat-icon>refresh</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

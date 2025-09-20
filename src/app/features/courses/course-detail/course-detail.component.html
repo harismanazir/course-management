@@ -1,0 +1,240 @@
+<div class="course-detail-page" *ngIf="course$ | async as course; else loading">
+  <!-- Course Hero Section -->
+  <div class="course-hero">
+    <div class="hero-content">
+      <div class="container">
+        <div class="hero-grid">
+          <!-- Course Info -->
+          <div class="course-info">
+            <div class="breadcrumb">
+              <a routerLink="/courses" mat-button class="breadcrumb-link">
+                <mat-icon>arrow_back</mat-icon>
+                Back to Courses
+              </a>
+            </div>
+            
+            <div class="course-category">
+              <mat-icon>category</mat-icon>
+              <span>{{course.category}}</span>
+            </div>
+            
+            <h1 class="course-title">{{course.title}}</h1>
+            
+            <p class="course-description">{{course.description}}</p>
+            
+            <div class="course-meta">
+              <div class="meta-item">
+                <mat-icon>person</mat-icon>
+                <span>{{course.instructor}}</span>
+              </div>
+              
+              <div class="meta-item">
+                <mat-icon>schedule</mat-icon>
+                <span>{{course.duration}}</span>
+              </div>
+              
+              <div class="meta-item">
+                <mat-icon>signal_cellular_alt</mat-icon>
+                <span>{{course.level}}</span>
+              </div>
+              
+              <div class="meta-item">
+                <mat-icon>people</mat-icon>
+                <span>{{course.studentsEnrolled | number}} students</span>
+              </div>
+            </div>
+            
+            <div class="course-rating">
+              <div class="rating-stars">
+                <mat-icon class="star filled" *ngFor="let star of getFullStars(course.rating)">star</mat-icon>
+                <mat-icon class="star half" *ngIf="hasPartialStar(course.rating)">star_half</mat-icon>
+                <mat-icon class="star empty" *ngFor="let star of getEmptyStars(course.rating)">star_border</mat-icon>
+              </div>
+              <span class="rating-value">{{course.rating | number:'1.1-1'}}</span>
+              <span class="rating-count">({{course.studentsEnrolled | number}} reviews)</span>
+            </div>
+          </div>
+          
+          <!-- Course Image -->
+          <div class="course-image-container">
+            <img [src]="course.image" [alt]="course.title" class="course-image">
+            <div class="price-overlay">
+              <div class="price">
+                {{course.price === 0 ? 'Free' : '$' + course.price}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Content -->
+  <div class="course-content">
+    <div class="container">
+      <div class="content-grid">
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- What You'll Learn -->
+          <mat-card class="content-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>school</mat-icon>
+                What You'll Learn
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <ul class="learning-list">
+                <li *ngFor="let item of course.syllabus">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{item}}</span>
+                </li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Prerequisites -->
+          <mat-card class="content-card" *ngIf="course.prerequisites.length > 0">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>assignment</mat-icon>
+                Prerequisites
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <ul class="prerequisites-list">
+                <li *ngFor="let prereq of course.prerequisites">
+                  <mat-icon>fiber_manual_record</mat-icon>
+                  <span>{{prereq}}</span>
+                </li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Course Tags -->
+          <mat-card class="content-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>local_offer</mat-icon>
+                Topics Covered
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-chip-set>
+                <mat-chip *ngFor="let tag of course.tags" class="course-tag">
+                  {{tag}}
+                </mat-chip>
+              </mat-chip-set>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <!-- Enrollment Card -->
+          <mat-card class="enrollment-card">
+            <mat-card-content>
+              <div class="enrollment-header">
+                <div class="price-info">
+                  <span class="current-price">
+                    {{course.price === 0 ? 'Free' : '$' + course.price}}
+                  </span>
+                </div>
+              </div>
+
+              <div class="enrollment-actions">
+                <!-- Student Actions -->
+                <ng-container *ngIf="authService.isStudent()">
+                  <button mat-raised-button 
+                          *ngIf="!isEnrolled"
+                          (click)="enrollInCourse()"
+                          class="btn-gradient enroll-btn">
+                    <mat-icon>add</mat-icon>
+                    Enroll Now
+                  </button>
+                  
+                  <button mat-raised-button 
+                          *ngIf="isEnrolled"
+                          class="enrolled-btn"
+                          disabled>
+                    <mat-icon>check</mat-icon>
+                    Enrolled
+                  </button>
+                </ng-container>
+
+                <!-- Admin Actions -->
+                <ng-container *ngIf="authService.isAdmin()">
+                  <button mat-raised-button 
+                          [routerLink]="['/courses/edit', course.id]"
+                          class="edit-btn">
+                    <mat-icon>edit</mat-icon>
+                    Edit Course
+                  </button>
+                  
+                  <button mat-button 
+                          (click)="deleteCourse()"
+                          class="delete-btn">
+                    <mat-icon>delete</mat-icon>
+                    Delete Course
+                  </button>
+                </ng-container>
+
+                <!-- Login Prompt -->
+                <button mat-raised-button 
+                        routerLink="/auth/login"
+                        *ngIf="!authService.getCurrentUser()"
+                        class="btn-gradient">
+                  <mat-icon>login</mat-icon>
+                  Login to Enroll
+                </button>
+              </div>
+
+              <div class="course-stats">
+                <div class="stat-item">
+                  <mat-icon>people</mat-icon>
+                  <span>{{course.studentsEnrolled | number}} students enrolled</span>
+                </div>
+                
+                <div class="stat-item">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{course.duration}} duration</span>
+                </div>
+                
+                <div class="stat-item">
+                  <mat-icon>language</mat-icon>
+                  <span>English</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Instructor Info -->
+          <mat-card class="instructor-card">
+            <mat-card-header>
+              <mat-card-title>Your Instructor</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="instructor-info">
+                <div class="instructor-avatar">
+                  <mat-icon>person</mat-icon>
+                </div>
+                <div class="instructor-details">
+                  <h4>{{course.instructor}}</h4>
+                  <p>Expert Instructor</p>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<ng-template #loading>
+  <div class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading course details...</p>
+  </div>
+</ng-template>

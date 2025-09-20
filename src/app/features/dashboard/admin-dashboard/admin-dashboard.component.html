@@ -1,0 +1,371 @@
+<div class="admin-dashboard">
+  <!-- Welcome Header -->
+  <div class="dashboard-header">
+    <div class="container">
+      <div class="welcome-section" *ngIf="currentUser$ | async as user">
+        <div class="welcome-content">
+          <div class="admin-info">
+            <div class="admin-icon">
+              <mat-icon>admin_panel_settings</mat-icon>
+            </div>
+            <div class="admin-details">
+              <h1>Admin Dashboard</h1>
+              <p>Welcome back, {{user.name}}! Manage courses and monitor platform activity</p>
+            </div>
+          </div>
+          
+          <div class="quick-actions">
+            <button mat-raised-button routerLink="/courses/add" class="btn-gradient">
+              <mat-icon>add</mat-icon>
+              Add New Course
+            </button>
+            <button mat-stroked-button routerLink="/courses" class="outline-btn">
+              <mat-icon>library_books</mat-icon>
+              View All Courses
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Stats -->
+  <div class="stats-section">
+    <div class="container">
+      <div class="stats-grid" *ngIf="adminStats$ | async as stats">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon courses">
+                <mat-icon>school</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.totalCourses}}</h3>
+                <p>Total Courses</p>
+                <span class="stat-detail">{{stats.publishedCourses}} Published</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon students">
+                <mat-icon>people</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.totalStudents}}</h3>
+                <p>Total Enrollments</p>
+                <span class="stat-detail">Across all courses</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon categories">
+                <mat-icon>category</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.totalCategories}}</h3>
+                <p>Categories</p>
+                <span class="stat-detail">Active categories</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <div class="stat-icon rating">
+                <mat-icon>star</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>{{stats.averageRating}}</h3>
+                <p>Average Rating</p>
+                <span class="stat-detail">Platform average</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <div class="container">
+      <mat-tab-group class="dashboard-tabs">
+        <!-- Course Management Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>library_books</mat-icon>
+            Course Management
+            <span class="tab-badge" *ngIf="(allCourses$ | async)?.length as count" [matBadge]="count"></span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="courses-section">
+              <div class="section-header">
+                <h2>All Courses</h2>
+                <div class="header-actions">
+                  <button mat-raised-button routerLink="/courses/add" class="btn-gradient">
+                    <mat-icon>add</mat-icon>
+                    Add Course
+                  </button>
+                </div>
+              </div>
+
+              <!-- Courses Table -->
+              <mat-card class="table-card">
+                <div class="table-container">
+                  <ng-container *ngIf="allCourses$ | async as courses">
+                    <table mat-table [dataSource]="courses" class="courses-table">
+                      <!-- Title Column -->
+                      <ng-container matColumnDef="title">
+                        <th mat-header-cell *matHeaderCellDef>Course</th>
+                        <td mat-cell *matCellDef="let course">
+                          <div class="course-cell">
+                            <img [src]="course.image" [alt]="course.title" class="course-thumbnail">
+                            <div class="course-info">
+                              <span class="course-title" [routerLink]="['/courses', course.id]">
+                                {{course.title}}
+                              </span>
+                              <span class="course-price">{{formatPrice(course.price)}}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </ng-container>
+
+                      <!-- Instructor Column -->
+                      <ng-container matColumnDef="instructor">
+                        <th mat-header-cell *matHeaderCellDef>Instructor</th>
+                        <td mat-cell *matCellDef="let course">{{course.instructor}}</td>
+                      </ng-container>
+
+                      <!-- Category Column -->
+                      <ng-container matColumnDef="category">
+                        <th mat-header-cell *matHeaderCellDef>Category</th>
+                        <td mat-cell *matCellDef="let course">
+                          <mat-chip class="category-chip">{{course.category}}</mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <!-- Level Column -->
+                      <ng-container matColumnDef="level">
+                        <th mat-header-cell *matHeaderCellDef>Level</th>
+                        <td mat-cell *matCellDef="let course">
+                          <mat-chip [class]="'level-' + course.level.toLowerCase()">
+                            {{course.level}}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <!-- Students Column -->
+                      <ng-container matColumnDef="students">
+                        <th mat-header-cell *matHeaderCellDef>Students</th>
+                        <td mat-cell *matCellDef="let course">
+                          <div class="students-cell">
+                            <mat-icon>people</mat-icon>
+                            <span>{{course.studentsEnrolled | number}}</span>
+                          </div>
+                        </td>
+                      </ng-container>
+
+                      <!-- Rating Column -->
+                      <ng-container matColumnDef="rating">
+                        <th mat-header-cell *matHeaderCellDef>Rating</th>
+                        <td mat-cell *matCellDef="let course">
+                          <div class="rating-cell">
+                            <mat-icon class="star-icon">star</mat-icon>
+                            <span>{{course.rating | number:'1.1-1'}}</span>
+                          </div>
+                        </td>
+                      </ng-container>
+
+                      <!-- Status Column -->
+                      <ng-container matColumnDef="status">
+                        <th mat-header-cell *matHeaderCellDef>Status</th>
+                        <td mat-cell *matCellDef="let course">
+                          <mat-chip [class]="'status-' + (course.isPublished ? 'published' : 'draft')">
+                            {{getStatusText(course.isPublished)}}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
+                      <!-- Actions Column -->
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef>Actions</th>
+                        <td mat-cell *matCellDef="let course">
+                          <button mat-icon-button [matMenuTriggerFor]="courseMenu" class="actions-btn">
+                            <mat-icon>more_vert</mat-icon>
+                          </button>
+                          
+                          <mat-menu #courseMenu="matMenu">
+                            <button mat-menu-item [routerLink]="['/courses', course.id]">
+                              <mat-icon>visibility</mat-icon>
+                              <span>View Details</span>
+                            </button>
+                            
+                            <button mat-menu-item [routerLink]="['/courses/edit', course.id]">
+                              <mat-icon>edit</mat-icon>
+                              <span>Edit Course</span>
+                            </button>
+                            
+                            <button mat-menu-item (click)="toggleCourseStatus(course)">
+                              <mat-icon>{{course.isPublished ? 'visibility_off' : 'visibility'}}</mat-icon>
+                              <span>{{course.isPublished ? 'Unpublish' : 'Publish'}}</span>
+                            </button>
+                            
+                            <mat-divider></mat-divider>
+                            
+                            <button mat-menu-item (click)="deleteCourse(course)" class="delete-action">
+                              <mat-icon>delete</mat-icon>
+                              <span>Delete Course</span>
+                            </button>
+                          </mat-menu>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="course-row"></tr>
+                    </table>
+
+                    <!-- No Courses -->
+                    <div class="empty-state" *ngIf="courses.length === 0">
+                      <mat-icon>school</mat-icon>
+                      <h3>No Courses Created</h3>
+                      <p>Get started by creating your first course</p>
+                      <button mat-raised-button routerLink="/courses/add" class="btn-gradient">
+                        <mat-icon>add</mat-icon>
+                        Create First Course
+                      </button>
+                    </div>
+                  </ng-container>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Recent Activity Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>timeline</mat-icon>
+            Recent Activity
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="activity-section">
+              <div class="section-header">
+                <h2>Recent Course Updates</h2>
+                <p>Track recent changes and course performance</p>
+              </div>
+
+              <div class="recent-courses" *ngIf="adminStats$ | async as stats">
+                <mat-card class="activity-card" *ngFor="let course of stats.recentCourses">
+                  <mat-card-content>
+                    <div class="activity-content">
+                      <img [src]="course.image" [alt]="course.title" class="activity-image">
+                      
+                      <div class="activity-info">
+                        <h4 [routerLink]="['/courses', course.id]" class="activity-title">
+                          {{course.title}}
+                        </h4>
+                        <p class="activity-instructor">by {{course.instructor}}</p>
+                        <div class="activity-meta">
+                          <span class="activity-students">
+                            <mat-icon>people</mat-icon>
+                            {{course.studentsEnrolled}} students
+                          </span>
+                          <span class="activity-rating">
+                            <mat-icon>star</mat-icon>
+                            {{course.rating | number:'1.1-1'}}
+                          </span>
+                          <span class="activity-updated">
+                            Updated {{course.updatedAt | date:'short'}}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div class="activity-actions">
+                        <button mat-icon-button [routerLink]="['/courses/edit', course.id]" matTooltip="Edit Course">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button [routerLink]="['/courses', course.id]" matTooltip="View Details">
+                          <mat-icon>visibility</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Analytics Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>analytics</mat-icon>
+            Analytics
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="analytics-section">
+              <div class="section-header">
+                <h2>Platform Analytics</h2>
+                <p>Monitor course performance and student engagement</p>
+              </div>
+
+              <div class="analytics-grid" *ngIf="adminStats$ | async as stats">
+                <mat-card class="analytics-card">
+                  <mat-card-header>
+                    <mat-card-title>Course Distribution</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="chart-placeholder">
+                      <mat-icon>pie_chart</mat-icon>
+                      <p>Course category distribution would be displayed here</p>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card class="analytics-card">
+                  <mat-card-header>
+                    <mat-card-title>Enrollment Trends</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="chart-placeholder">
+                      <mat-icon>trending_up</mat-icon>
+                      <p>Monthly enrollment trends would be displayed here</p>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card class="analytics-card">
+                  <mat-card-header>
+                    <mat-card-title>Top Performing Courses</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="top-courses-list">
+                      <div class="top-course-item" *ngFor="let course of stats.recentCourses.slice(0, 3); let i = index">
+                        <span class="rank">{{i + 1}}</span>
+                        <span class="course-name">{{course.title}}</span>
+                        <span class="course-metric">{{course.studentsEnrolled}} students</span>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+</div>
