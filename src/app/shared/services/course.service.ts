@@ -45,10 +45,11 @@ export class CourseService {
   getAllCourses(filters?: CourseFilters): Observable<Course[]> {
     console.log('Fetching all courses with filters:', filters);
     
-    let query = this.supabase.from('courses')
+    // Query with proper category join
+    const query = this.supabase.from('courses')
       .select(`
         *,
-        categories(name)
+        categories!inner(name)
       `)
       .eq('is_published', true)
       .order('created_at', { ascending: false });
@@ -400,7 +401,7 @@ export class CourseService {
           console.error('Error fetching featured courses:', error);
           return [];
         }
-        return data?.map(this.mapDbCourseToCourse) || [];
+        return data?.map(this.mapDbCourseToCourse.bind(this)) || [];
       }),
       catchError(error => {
         console.error('getFeaturedCourses error:', error);
@@ -425,7 +426,7 @@ export class CourseService {
           console.error('Error fetching popular courses:', error);
           return [];
         }
-        return data?.map(this.mapDbCourseToCourse) || [];
+        return data?.map(this.mapDbCourseToCourse.bind(this)) || [];
       }),
       catchError(error => {
         console.error('getPopularCourses error:', error);
@@ -453,7 +454,7 @@ export class CourseService {
           console.error('Error fetching courses by IDs:', error);
           return [];
         }
-        return data?.map(this.mapDbCourseToCourse) || [];
+        return data?.map(this.mapDbCourseToCourse.bind(this)) || [];
       }),
       catchError(error => {
         console.error('getCoursesByIds error:', error);
@@ -517,7 +518,7 @@ export class CourseService {
   private mapDbCourseToCourse(dbCourse: any): Course {
     console.log('Mapping database course:', dbCourse);
     
-    // Handle both old and new category structure
+    // Handle category name from the joined categories table
     let categoryName = 'Unknown';
     if (dbCourse.categories) {
       if (Array.isArray(dbCourse.categories) && dbCourse.categories.length > 0) {

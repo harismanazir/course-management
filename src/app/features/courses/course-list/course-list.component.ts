@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -10,10 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
-import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
-import { map, startWith, debounceTime, catchError, tap } from 'rxjs/operators';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { takeUntil, debounceTime, startWith } from 'rxjs/operators';
 
-import { CourseService, Course, CourseFilters } from '../../../shared/services/course.service';
+import { CourseService, Course } from '../../../shared/services/course.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CourseCardComponent } from '../../../shared/components/course-card/course-card.component';
 
@@ -37,28 +37,36 @@ import { CourseCardComponent } from '../../../shared/components/course-card/cour
   templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.css']
 })
-export class CourseListComponent implements OnInit {
+export class CourseListComponent implements OnInit, OnDestroy {
   private courseService = inject(CourseService);
   private fb = inject(FormBuilder);
   protected authService = inject(AuthService);
+  
+  private destroy$ = new Subject<void>();
 
   filtersForm!: FormGroup;
-  courses$!: Observable<Course[]>;
-  filteredCourses$!: Observable<Course[]>;
-  categories$!: Observable<string[]>;
-  instructors$!: Observable<string[]>;
   
-  private isLoadingSubject = new BehaviorSubject<boolean>(true);
-  isLoading$ = this.isLoadingSubject.asObservable();
+  // Simple properties instead of complex observables
+  allCourses: Course[] = [];
+  filteredCourses: Course[] = [];
+  categories: string[] = [];
+  instructors: string[] = [];
+  enrolledCourseIds: string[] = [];
   
-  private enrolledCourseIds: string[] = [];
+  isLoading = true;
+  hasError = false;
+  errorMessage = '';
 
   ngOnInit() {
-    console.log('CourseListComponent initialized');
+    console.log('🚀 CourseListComponent initialized');
     this.initializeForm();
     this.loadData();
     this.setupFiltering();
-    this.loadEnrollments();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private initializeForm(): void {
@@ -73,121 +81,120 @@ export class CourseListComponent implements OnInit {
   }
 
   private loadData(): void {
-    console.log('Loading course data...');
-    
-    // Load courses with error handling
-    this.courses$ = this.courseService.getAllCourses().pipe(
-      tap(courses => {
-        console.log('Courses loaded:', courses);
-        this.isLoadingSubject.next(false);
-      }),
-      catchError(error => {
-        console.error('Error loading courses:', error);
-        this.isLoadingSubject.next(false);
-        return of([]); // Return empty array on error
-      })
-    );
-    
-    // Load categories with error handling
-    this.categories$ = this.courseService.getCategories().pipe(
-      tap(categories => console.log('Categories loaded:', categories)),
-      catchError(error => {
-        console.error('Error loading categories:', error);
-        return of([]); // Return empty array on error
-      })
-    );
-    
-    // Load instructors with error handling
-    this.instructors$ = this.courseService.getInstructors().pipe(
-      tap(instructors => console.log('Instructors loaded:', instructors)),
-      catchError(error => {
-        console.error('Error loading instructors:', error);
-        return of([]); // Return empty array on error
-      })
-    );
+    console.log('📊 Loading course data...');
+    this.isLoading = true;
+    this.hasError = false;
+
+    // Load courses
+    this.courseService.getAllCourses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (courses) => {
+          console.log('✅ Courses loaded:', courses.length);
+          this.allCourses = courses;
+          this.filteredCourses = [...courses];
+          this.isLoading = false;
+          this.extractInstructors();
+        },
+        error: (error) => {
+          console.error('❌ Error loading courses:', error);
+          this.hasError = true;
+          this.errorMessage = 'Failed to load courses. Please try again.';
+          this.isLoading = false;
+        }
+      });
+
+    // Load categories
+    this.courseService.getCategories()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (categories) => {
+          console.log('✅ Categories loaded:', categories);
+          this.categories = categories;
+        },
+        error: (error) => {
+          console.error('❌ Error loading categories:', error);
+          this.categories = ['Programming', 'Design', 'Business', 'Marketing'];
+        }
+      });
+
+    // Load enrollments if student
+    this.loadEnrollments();
   }
 
   private loadEnrollments(): void {
     if (this.authService.isStudent()) {
-      this.authService.getEnrolledCourses().subscribe({
-        next: courseIds => {
-          this.enrolledCourseIds = courseIds;
-          console.log('Enrolled course IDs:', courseIds);
-        },
-        error: error => {
-          console.error('Error loading enrollments:', error);
-        }
-      });
+      this.authService.getEnrolledCourses()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (courseIds) => {
+            console.log('✅ Enrollments loaded:', courseIds);
+            this.enrolledCourseIds = courseIds;
+          },
+          error: (error) => {
+            console.error('❌ Error loading enrollments:', error);
+            this.enrolledCourseIds = [];
+          }
+        });
     }
   }
 
+  private extractInstructors(): void {
+    const instructorSet = new Set(this.allCourses.map(course => course.instructor));
+    this.instructors = Array.from(instructorSet).sort();
+  }
+
   private setupFiltering(): void {
-    const filters$ = this.filtersForm.valueChanges.pipe(
-      startWith(this.filtersForm.value),
-      debounceTime(300),
-      tap(filters => console.log('Filters changed:', filters))
-    );
+    this.filtersForm.valueChanges
+      .pipe(
+        startWith(this.filtersForm.value),
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(filters => {
+        console.log('🔍 Applying filters:', filters);
+        this.applyFilters(filters);
+      });
+  }
 
-    this.filteredCourses$ = combineLatest([
-      this.courses$,
-      filters$
-    ]).pipe(
-      map(([courses, filters]) => {
-        console.log('Filtering courses:', { coursesCount: courses.length, filters });
-        
-        if (!courses || courses.length === 0) {
-          console.log('No courses to filter');
-          return [];
-        }
+  private applyFilters(filters: any): void {
+    let filtered = [...this.allCourses];
 
-        let filtered = courses;
+    // Search filter
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = filters.search.toLowerCase().trim();
+      filtered = filtered.filter(course =>
+        course.title.toLowerCase().includes(searchTerm) ||
+        course.description.toLowerCase().includes(searchTerm) ||
+        course.instructor.toLowerCase().includes(searchTerm) ||
+        course.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm))
+      );
+    }
 
-        // Search filter
-        if (filters.search && filters.search.trim()) {
-          const searchTerm = filters.search.toLowerCase().trim();
-          filtered = filtered.filter(course =>
-            course.title.toLowerCase().includes(searchTerm) ||
-            course.description.toLowerCase().includes(searchTerm) ||
-            course.instructor.toLowerCase().includes(searchTerm) ||
-            course.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm))
-          );
-          console.log(`After search filter (${searchTerm}):`, filtered.length);
-        }
+    // Category filter
+    if (filters.category) {
+      filtered = filtered.filter(course => course.category === filters.category);
+    }
 
-        // Category filter
-        if (filters.category) {
-          filtered = filtered.filter(course => course.category === filters.category);
-          console.log(`After category filter (${filters.category}):`, filtered.length);
-        }
+    // Level filter
+    if (filters.level) {
+      filtered = filtered.filter(course => course.level === filters.level);
+    }
 
-        // Level filter
-        if (filters.level) {
-          filtered = filtered.filter(course => course.level === filters.level);
-          console.log(`After level filter (${filters.level}):`, filtered.length);
-        }
+    // Instructor filter
+    if (filters.instructor) {
+      filtered = filtered.filter(course => course.instructor === filters.instructor);
+    }
 
-        // Instructor filter
-        if (filters.instructor) {
-          filtered = filtered.filter(course => course.instructor === filters.instructor);
-          console.log(`After instructor filter (${filters.instructor}):`, filtered.length);
-        }
+    // Price range filter
+    if (filters.minPrice !== null && filters.maxPrice !== null) {
+      filtered = filtered.filter(course => 
+        course.price >= filters.minPrice && course.price <= filters.maxPrice
+      );
+    }
 
-        // Price range filter
-        if (filters.minPrice !== null && filters.maxPrice !== null) {
-          filtered = filtered.filter(course => 
-            course.price >= filters.minPrice && course.price <= filters.maxPrice
-          );
-          console.log(`After price filter (${filters.minPrice}-${filters.maxPrice}):`, filtered.length);
-        }
-
-        console.log('Final filtered courses:', filtered);
-        return filtered;
-      }),
-      catchError(error => {
-        console.error('Error in filtering:', error);
-        return of([]);
-      })
-    );
+    this.filteredCourses = filtered;
+    console.log(`📋 Filtered ${filtered.length} courses from ${this.allCourses.length} total`);
   }
 
   isEnrolled(courseId: string): boolean {
@@ -195,7 +202,7 @@ export class CourseListComponent implements OnInit {
   }
 
   clearFilters(): void {
-    console.log('Clearing filters');
+    console.log('🧹 Clearing filters');
     this.filtersForm.reset({
       search: '',
       category: '',
@@ -204,6 +211,11 @@ export class CourseListComponent implements OnInit {
       minPrice: 0,
       maxPrice: 500
     });
+  }
+
+  retryLoad(): void {
+    console.log('🔄 Retrying data load...');
+    this.loadData();
   }
 
   trackByCourse(index: number, course: Course): string {

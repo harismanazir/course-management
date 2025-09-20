@@ -37,7 +37,7 @@
               <mat-label>Category</mat-label>
               <mat-select formControlName="category">
                 <mat-option value="">All Categories</mat-option>
-                <mat-option *ngFor="let category of categories$ | async" [value]="category">
+                <mat-option *ngFor="let category of categories" [value]="category">
                   {{category}}
                 </mat-option>
               </mat-select>
@@ -59,7 +59,7 @@
               <mat-label>Instructor</mat-label>
               <mat-select formControlName="instructor">
                 <mat-option value="">All Instructors</mat-option>
-                <mat-option *ngFor="let instructor of instructors$ | async" [value]="instructor">
+                <mat-option *ngFor="let instructor of instructors" [value]="instructor">
                   {{instructor}}
                 </mat-option>
               </mat-select>
@@ -98,34 +98,49 @@
       <!-- Results Header -->
       <div class="results-header">
         <h2>
-          <span *ngIf="!(isLoading$ | async)">
-            {{(filteredCourses$ | async)?.length || 0}} courses found
+          <span *ngIf="!isLoading && !hasError">
+            {{filteredCourses.length}} courses found
           </span>
-          <span *ngIf="isLoading$ | async">Searching courses...</span>
+          <span *ngIf="isLoading">Loading courses...</span>
+          <span *ngIf="hasError">Error loading courses</span>
         </h2>
       </div>
 
       <!-- Loading State -->
-      <div class="loading-container" *ngIf="isLoading$ | async">
+      <div class="loading-container" *ngIf="isLoading">
         <mat-spinner diameter="50"></mat-spinner>
         <p>Loading courses...</p>
       </div>
 
+      <!-- Error State -->
+      <div class="error-state" *ngIf="hasError && !isLoading">
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Oops! Something went wrong</h3>
+          <p>{{errorMessage}}</p>
+          <button mat-raised-button 
+                  (click)="retryLoad()" 
+                  class="btn-gradient">
+            <mat-icon>refresh</mat-icon>
+            Try Again
+          </button>
+        </div>
+      </div>
+
       <!-- Courses Grid -->
-      
-<div class="courses-grid grid grid-3" 
-     *ngIf="!(isLoading$ | async) && (filteredCourses$ | async) as courses">
-  <app-course-card 
-    *ngFor="let course of courses; trackBy: trackByCourse" 
-    [course]="course"
-    [isEnrolled]="isEnrolled(course.id)"
-    class="fade-in-up">
-  </app-course-card>
-</div>
+      <div class="courses-grid grid grid-3" 
+           *ngIf="!isLoading && !hasError && filteredCourses.length > 0">
+        <app-course-card 
+          *ngFor="let course of filteredCourses; trackBy: trackByCourse" 
+          [course]="course"
+          [isEnrolled]="isEnrolled(course.id)"
+          class="fade-in-up">
+        </app-course-card>
+      </div>
 
       <!-- No Results -->
       <div class="empty-state" 
-           *ngIf="!(isLoading$ | async) && (filteredCourses$ | async)?.length === 0">
+           *ngIf="!isLoading && !hasError && filteredCourses.length === 0 && allCourses.length > 0">
         <mat-icon>search_off</mat-icon>
         <h3>No courses found</h3>
         <p>Try adjusting your search criteria or browse all courses</p>
@@ -134,6 +149,21 @@
                 class="btn-gradient">
           <mat-icon>refresh</mat-icon>
           Clear Filters
+        </button>
+      </div>
+
+      <!-- No Courses at All -->
+      <div class="empty-state" 
+           *ngIf="!isLoading && !hasError && allCourses.length === 0">
+        <mat-icon>school</mat-icon>
+        <h3>No courses available</h3>
+        <p>There are no courses in the database yet.</p>
+        <button mat-raised-button 
+                routerLink="/courses/add" 
+                *ngIf="authService.isAdmin()"
+                class="btn-gradient">
+          <mat-icon>add</mat-icon>
+          Add First Course
         </button>
       </div>
     </div>
