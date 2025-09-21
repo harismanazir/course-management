@@ -264,6 +264,8 @@ export class AuthService {
       return throwError(() => new Error('Only students can enroll in courses'));
     }
 
+    console.log('📚 Enrolling in course:', courseId);
+
     return from(
       this.supabase.from('enrollments').insert({
         user_id: user.id,
@@ -271,11 +273,25 @@ export class AuthService {
         progress: 0
       })
     ).pipe(
-      map(() => true),
-      catchError(error => {
-        if (error.code === '23505') {
-          return throwError(() => new Error('Already enrolled in this course'));
+      switchMap(({ error }) => {
+        if (error) {
+          if (error.code === '23505') {
+            return throwError(() => new Error('Already enrolled in this course'));
+          }
+          throw error;
         }
+
+        // Increment students_enrolled count
+        return from(
+          this.supabase.rpc('increment_students_enrolled', { course_id: courseId })
+        );
+      }),
+      map(() => {
+        console.log('✅ Successfully enrolled in course');
+        return true;
+      }),
+      catchError(error => {
+        console.error('❌ Enrollment error:', error);
         return throwError(() => new Error('Failed to enroll in course'));
       })
     );
@@ -287,14 +303,28 @@ export class AuthService {
       return throwError(() => new Error('User not logged in'));
     }
 
+    console.log('📚 Unenrolling from course:', courseId);
+
     return from(
       this.supabase.from('enrollments')
         .delete()
         .eq('user_id', user.id)
         .eq('course_id', courseId)
     ).pipe(
-      map(() => true),
+      switchMap(({ error }) => {
+        if (error) throw error;
+
+        // Decrement students_enrolled count
+        return from(
+          this.supabase.rpc('decrement_students_enrolled', { course_id: courseId })
+        );
+      }),
+      map(() => {
+        console.log('✅ Successfully unenrolled from course');
+        return true;
+      }),
       catchError(error => {
+        console.error('❌ Unenrollment error:', error);
         return throwError(() => new Error('Failed to unenroll from course'));
       })
     );

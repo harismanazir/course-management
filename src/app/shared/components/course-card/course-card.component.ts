@@ -4,15 +4,9 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { Course } from '../../services/course.service';
 import { AuthService } from '../../services/auth.service';
-import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-course-card',
@@ -22,15 +16,164 @@ import { NotificationService } from '../../services/notification.service';
     RouterModule,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatBadgeModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule
+    MatIconModule
   ],
-  templateUrl: './course-card.component.html',
-  styleUrls: ['./course-card.component.css']
+  template: `
+    <mat-card class="course-card">
+      <div class="course-image-container">
+        <img [src]="course.image" [alt]="course.title" class="course-image">
+        <div class="price-badge">{{formatPrice(course.price)}}</div>
+      </div>
+      
+      <mat-card-content>
+        <div class="course-header">
+          <span class="course-category">{{course.category}}</span>
+          <span class="course-level">{{course.level}}</span>
+        </div>
+        
+        <h3 class="course-title">{{course.title}}</h3>
+        <p class="course-description">{{course.description | slice:0:100}}{{course.description.length > 100 ? '...' : ''}}</p>
+        
+        <div class="course-meta">
+          <span class="instructor">👨‍🏫 {{course.instructor}}</span>
+          <span class="duration">⏱️ {{course.duration}}</span>
+          <span class="students">👥 {{course.studentsEnrolled}} students</span>
+          <span class="rating">⭐ {{course.rating}}/5</span>
+        </div>
+      </mat-card-content>
+      
+      <mat-card-actions>
+        <button mat-button [routerLink]="['/courses', course.id]">
+          <mat-icon>visibility</mat-icon>
+          View Details
+        </button>
+        
+        <button mat-raised-button 
+                *ngIf="isStudent && showEnrollButton"
+                (click)="onEnroll()"
+                [color]="isEnrolled ? 'accent' : 'primary'">
+          <mat-icon>{{isEnrolled ? 'check' : 'add'}}</mat-icon>
+          {{isEnrolled ? 'Enrolled' : 'Enroll'}}
+        </button>
+        
+        <button mat-raised-button 
+                [routerLink]="['/courses/edit', course.id]"
+                *ngIf="isAdmin"
+                color="warn">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  `,
+  styles: [`
+    .course-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .course-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    
+    .course-image-container {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+    
+    .course-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .price-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #4F46E5;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .course-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .course-category {
+      background: #E5E7EB;
+      color: #374151;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .course-level {
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+    
+    .course-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+      color: #111827;
+    }
+    
+    .course-description {
+      color: #6B7280;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    
+    .course-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #6B7280;
+      margin-bottom: 16px;
+    }
+    
+    .course-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    mat-card-content {
+      flex: 1;
+      padding: 16px;
+    }
+    
+    mat-card-actions {
+      padding: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+    }
+    
+    .price-badge.free {
+      background: #10B981;
+    }
+  `]
 })
 export class CourseCardComponent {
   @Input() course!: Course;
@@ -39,9 +182,6 @@ export class CourseCardComponent {
   @Input() isEnrolled = false;
 
   private authService = inject(AuthService);
-  private notificationService = inject(NotificationService);
-
-  isLoading = false;
 
   get currentUser() {
     return this.authService.getCurrentUser();
@@ -55,141 +195,13 @@ export class CourseCardComponent {
     return this.authService.isStudent();
   }
 
-  get isLoggedIn(): boolean {
-    return !!this.currentUser;
-  }
-
-  get ratingStars(): number[] {
-    const fullStars = Math.floor(this.course.rating);
-    return Array(fullStars).fill(1);
-  }
-
-  get hasPartialStar(): boolean {
-    return this.course.rating % 1 !== 0;
-  }
-
-  get emptyStars(): number[] {
-    const fullStars = Math.floor(this.course.rating);
-    const emptyCount = 5 - fullStars - (this.hasPartialStar ? 1 : 0);
-    return Array(emptyCount).fill(0);
+  formatPrice(price: number): string {
+    if (price === 0) return 'Free';
+    return `${price}`;
   }
 
   onEnroll(): void {
-    if (!this.isLoggedIn) {
-      this.notificationService.info('Please log in to enroll in courses');
-      return;
-    }
-
-    if (!this.isStudent) {
-      this.notificationService.warning('Only students can enroll in courses');
-      return;
-    }
-
-    this.isLoading = true;
-
-    if (this.isEnrolled) {
-      this.authService.unenrollFromCourse(this.course.id).subscribe({
-        next: () => {
-          this.notificationService.success('Successfully unenrolled from course');
-          this.isEnrolled = false;
-        },
-        error: (error) => {
-          this.notificationService.error('Failed to unenroll from course');
-        },
-        complete: () => {
-          this.isLoading = false;
-        }
-      });
-    } else {
-      this.authService.enrollInCourse(this.course.id).subscribe({
-        next: () => {
-          this.notificationService.success('Successfully enrolled in course!');
-          this.isEnrolled = true;
-        },
-        error: (error) => {
-          this.notificationService.error('Failed to enroll in course');
-        },
-        complete: () => {
-          this.isLoading = false;
-        }
-      });
-    }
-  }
-
-  formatDuration(duration: string): string {
-    return duration
-      .replace('weeks', 'wk')
-      .replace('week', 'wk')
-      .replace('months', 'mo')
-      .replace('month', 'mo')
-      .replace('days', 'd')
-      .replace('day', 'd');
-  }
-
-  formatPrice(price: number): string {
-    if (price === 0) return 'Free';
-    if (price < 1000) return `$${price}`;
-    return `$${(price / 1000).toFixed(1)}k`;
-  }
-
-  getLevelIcon(level: string): string {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-        return 'school';
-      case 'intermediate':
-        return 'psychology';
-      case 'advanced':
-        return 'rocket_launch';
-      default:
-        return 'signal_cellular_alt';
-    }
-  }
-
-  getCategoryIcon(category: string): string {
-    const categoryIcons: { [key: string]: string } = {
-      'Programming': 'code',
-      'Design': 'palette',
-      'Business': 'business_center',
-      'Marketing': 'campaign',
-      'Data Science': 'analytics',
-      'Web Development': 'web',
-      'Mobile Development': 'phone_android',
-      'DevOps': 'settings_applications',
-      'Cybersecurity': 'security',
-      'AI & Machine Learning': 'smart_toy',
-      'Photography': 'camera_alt',
-      'Music': 'music_note',
-      'Language': 'translate',
-      'Health & Fitness': 'fitness_center',
-      'Finance': 'account_balance',
-      'Personal Development': 'self_improvement',
-      'default': 'category'
-    };
-
-    return categoryIcons[category] || categoryIcons['default'];
-  }
-
-  getLevelColor(level: string): string {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-        return 'success';
-      case 'intermediate':
-        return 'warning';
-      case 'advanced':
-        return 'danger';
-      default:
-        return 'primary';
-    }
-  }
-
-  getProgressPercentage(): number {
-    // This would typically come from the enrollment data
-    // For now, return a mock value
-    return Math.floor(Math.random() * 100);
-  }
-
-  onBookmark(): void {
-    // Future feature: Save course for later
-    this.notificationService.info('Bookmark feature coming soon!');
+    console.log('Enroll clicked for course:', this.course.id);
+    // For now, just log - the actual enrollment will be handled by parent component
   }
 }

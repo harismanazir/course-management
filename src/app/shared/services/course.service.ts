@@ -47,7 +47,26 @@ export class CourseService {
     
     return from(
       this.supabase.from('courses')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          instructor,
+          duration,
+          category_id,
+          level,
+          price,
+          rating,
+          students_enrolled,
+          image,
+          syllabus,
+          prerequisites,
+          tags,
+          is_published,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .eq('is_published', true)
         .order('created_at', { ascending: false })
     ).pipe(
@@ -121,7 +140,26 @@ export class CourseService {
     
     return from(
       this.supabase.from('courses')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          instructor,
+          duration,
+          category_id,
+          level,
+          price,
+          rating,
+          students_enrolled,
+          image,
+          syllabus,
+          prerequisites,
+          tags,
+          is_published,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .eq('id', id)
         .single()
     ).pipe(
@@ -148,27 +186,62 @@ export class CourseService {
 
     console.log('📝 Creating course:', courseData.title);
 
-    const insertData = {
-      title: courseData.title,
-      description: courseData.description,
-      instructor: courseData.instructor,
-      duration: courseData.duration,
-      category: courseData.category,
-      level: courseData.level,
-      price: courseData.price,
-      image: courseData.image,
-      syllabus: courseData.syllabus,
-      prerequisites: courseData.prerequisites,
-      tags: courseData.tags,
-      is_published: courseData.isPublished,
-      created_by: user.id,
-      rating: 4.5,
-      students_enrolled: 0
-    };
-
+    // First, get the category ID
     return from(
-      this.supabase.from('courses').insert(insertData).select().single()
+      this.supabase.from('categories')
+        .select('id')
+        .eq('name', courseData.category)
+        .single()
     ).pipe(
+      switchMap(({ data: categoryData, error: categoryError }) => {
+        if (categoryError || !categoryData) {
+          throw new Error(`Category "${courseData.category}" not found`);
+        }
+
+        const insertData = {
+          title: courseData.title,
+          description: courseData.description,
+          instructor: courseData.instructor,
+          duration: courseData.duration,
+          category_id: categoryData.id,
+          level: courseData.level,
+          price: courseData.price,
+          image: courseData.image,
+          syllabus: courseData.syllabus,
+          prerequisites: courseData.prerequisites,
+          tags: courseData.tags,
+          is_published: courseData.isPublished,
+          created_by: user.id,
+          rating: 4.5,
+          students_enrolled: 0
+        };
+
+        return from(
+          this.supabase.from('courses')
+            .insert(insertData)
+            .select(`
+              id,
+              title,
+              description,
+              instructor,
+              duration,
+              category_id,
+              level,
+              price,
+              rating,
+              students_enrolled,
+              image,
+              syllabus,
+              prerequisites,
+              tags,
+              is_published,
+              created_at,
+              updated_at,
+              categories!inner(name)
+            `)
+            .single()
+        );
+      }),
       map(({ data, error }) => {
         if (error) {
           console.error('❌ Course creation error:', error);
@@ -192,36 +265,111 @@ export class CourseService {
 
     console.log('📝 Updating course:', id);
 
-    const updateData: any = {
-      title: updates.title,
-      description: updates.description,
-      instructor: updates.instructor,
-      duration: updates.duration,
-      category: updates.category,
-      level: updates.level,
-      price: updates.price,
-      image: updates.image,
-      syllabus: updates.syllabus,
-      prerequisites: updates.prerequisites,
-      tags: updates.tags,
-      is_published: updates.isPublished,
-      updated_at: new Date().toISOString()
-    };
+    // If category is being updated, get the category ID first
+    const updateOperation = updates.category ? 
+      from(
+        this.supabase.from('categories')
+          .select('id')
+          .eq('name', updates.category)
+          .single()
+      ).pipe(
+        switchMap(({ data: categoryData, error: categoryError }) => {
+          if (categoryError || !categoryData) {
+            throw new Error(`Category "${updates.category}" not found`);
+          }
 
-    // Remove undefined values
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
+          const updateData: any = {
+            title: updates.title,
+            description: updates.description,
+            instructor: updates.instructor,
+            duration: updates.duration,
+            category_id: categoryData.id,
+            level: updates.level,
+            price: updates.price,
+            image: updates.image,
+            syllabus: updates.syllabus,
+            prerequisites: updates.prerequisites,
+            tags: updates.tags,
+            is_published: updates.isPublished,
+            updated_at: new Date().toISOString()
+          };
 
-    return from(
-      this.supabase.from('courses')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
-    ).pipe(
+          // Remove undefined values
+          Object.keys(updateData).forEach(key => {
+            if (updateData[key] === undefined) {
+              delete updateData[key];
+            }
+          });
+
+          return from(
+            this.supabase.from('courses')
+              .update(updateData)
+              .eq('id', id)
+              .select(`
+                id,
+                title,
+                description,
+                instructor,
+                duration,
+                category_id,
+                level,
+                price,
+                rating,
+                students_enrolled,
+                image,
+                syllabus,
+                prerequisites,
+                tags,
+                is_published,
+                created_at,
+                updated_at,
+                categories!inner(name)
+              `)
+              .single()
+          );
+        })
+      ) : 
+      from(
+        this.supabase.from('courses')
+          .update({
+            title: updates.title,
+            description: updates.description,
+            instructor: updates.instructor,
+            duration: updates.duration,
+            level: updates.level,
+            price: updates.price,
+            image: updates.image,
+            syllabus: updates.syllabus,
+            prerequisites: updates.prerequisites,
+            tags: updates.tags,
+            is_published: updates.isPublished,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', id)
+          .select(`
+            id,
+            title,
+            description,
+            instructor,
+            duration,
+            category_id,
+            level,
+            price,
+            rating,
+            students_enrolled,
+            image,
+            syllabus,
+            prerequisites,
+            tags,
+            is_published,
+            created_at,
+            updated_at,
+            categories!inner(name)
+          `)
+          .single()
+      );
+
+    return updateOperation.pipe(
       map(({ data, error }) => {
         if (error) throw error;
         console.log('✅ Course updated successfully:', data.title);
@@ -260,22 +408,42 @@ export class CourseService {
   getCategories(): Observable<string[]> {
     console.log('🔍 Fetching categories...');
     
-    // Return hardcoded categories for now to ensure it works
-    const categories = [
-      'Programming',
-      'Design',
-      'Business',
-      'Marketing',
-      'Data Science',
-      'Web Development',
-      'Mobile Development',
-      'DevOps',
-      'Cybersecurity',
-      'AI & Machine Learning'
-    ];
-    
-    console.log('✅ Categories loaded:', categories.length);
-    return of(categories);
+    return from(
+      this.supabase.from('categories')
+        .select('name')
+        .order('name')
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          console.error('❌ Error fetching categories:', error);
+          // Return hardcoded categories as fallback
+          return [
+            'Programming',
+            'Design',
+            'Business',
+            'Marketing',
+            'Data Science',
+            'Photography'
+          ];
+        }
+        
+        const categories = data?.map((cat: any) => cat.name) || [];
+        console.log('✅ Categories loaded:', categories.length);
+        return categories;
+      }),
+      catchError(error => {
+        console.error('❌ getCategories error:', error);
+        // Return hardcoded categories as fallback
+        return of([
+          'Programming',
+          'Design', 
+          'Business',
+          'Marketing',
+          'Data Science',
+          'Photography'
+        ]);
+      })
+    );
   }
 
   getInstructors(): Observable<string[]> {
@@ -305,7 +473,26 @@ export class CourseService {
     
     return from(
       this.supabase.from('courses')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          instructor,
+          duration,
+          category_id,
+          level,
+          price,
+          rating,
+          students_enrolled,
+          image,
+          syllabus,
+          prerequisites,
+          tags,
+          is_published,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .eq('is_published', true)
         .order('rating', { ascending: false })
         .limit(limit)
@@ -330,7 +517,26 @@ export class CourseService {
     
     return from(
       this.supabase.from('courses')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          instructor,
+          duration,
+          category_id,
+          level,
+          price,
+          rating,
+          students_enrolled,
+          image,
+          syllabus,
+          prerequisites,
+          tags,
+          is_published,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .eq('is_published', true)
         .order('students_enrolled', { ascending: false })
         .limit(limit)
@@ -360,7 +566,26 @@ export class CourseService {
 
     return from(
       this.supabase.from('courses')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          instructor,
+          duration,
+          category_id,
+          level,
+          price,
+          rating,
+          students_enrolled,
+          image,
+          syllabus,
+          prerequisites,
+          tags,
+          is_published,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .in('id', ids)
         .eq('is_published', true)
     ).pipe(
@@ -417,7 +642,7 @@ export class CourseService {
           totalCourses,
           totalStudents,
           averageRating: Math.round(averageRating * 10) / 10,
-          categoriesCount: 10 // Hardcoded for now
+          categoriesCount: 6 // Based on your database schema
         };
 
         console.log('✅ Course stats loaded:', stats);
@@ -436,13 +661,16 @@ export class CourseService {
   }
 
   private mapDbCourseToCourse(dbCourse: any): Course {
+    // Handle the joined category data
+    const categoryName = dbCourse.categories?.name || 'General';
+    
     const course: Course = {
       id: dbCourse.id,
       title: dbCourse.title || 'Untitled Course',
       description: dbCourse.description || 'No description available',
       instructor: dbCourse.instructor || 'Unknown Instructor',
       duration: dbCourse.duration || 'Not specified',
-      category: dbCourse.category || 'General',
+      category: categoryName,
       level: dbCourse.level || 'Beginner',
       price: dbCourse.price || 0,
       rating: dbCourse.rating || 4.5,

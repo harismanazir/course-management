@@ -26,4 +26,8 @@ export class SupabaseService {
   from(table: string) {
     return this.supabase.from(table);
   }
+
+  rpc(functionName: string, params?: any) {
+    return this.supabase.rpc(functionName, params);
+  }
 }

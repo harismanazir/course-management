@@ -38,10 +38,10 @@ export class CourseDetailComponent implements OnInit {
 
   course$!: Observable<Course | undefined>;
 
-  ngOnInit() {
-  this.loadCourse();
-  this.checkEnrollmentStatus();
-}
+ngOnInit() {
+    this.loadCourse();
+    this.checkEnrollmentStatus();
+  }
 
   private loadCourse(): void {
     this.course$ = this.route.params.pipe(
@@ -50,20 +50,20 @@ export class CourseDetailComponent implements OnInit {
   }
 
   // Add this property
-private enrollmentStatus$ = new BehaviorSubject <boolean>(false);
+  private enrollmentStatus$ = new BehaviorSubject<boolean>(false);
 
+  private checkEnrollmentStatus(): void {
+    const courseId = this.route.snapshot.params['id'];
+    if (this.authService.getCurrentUser()) {
+      this.authService.isEnrolledInCourse(courseId).subscribe(isEnrolled => {
+        this.enrollmentStatus$.next(isEnrolled);
+      });
+    }
+  }
 
-
-private checkEnrollmentStatus(): void {
-  const courseId = this.route.snapshot.params['id'];
-  this.authService.isEnrolledInCourse(courseId).subscribe(isEnrolled => {
-    this.enrollmentStatus$.next(isEnrolled);
-  });
-}
-
-get isEnrolled(): boolean {
-  return this.enrollmentStatus$.value;
-}
+  get isEnrolled(): boolean {
+    return this.enrollmentStatus$.value;
+  }
 
   enrollInCourse(): void {
     const courseId = this.route.snapshot.params['id'];

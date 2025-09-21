@@ -8,6 +8,7 @@ import { LoadingService } from './shared/services/loading.service';
 
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -137,4 +138,6 @@ export class AppComponent implements OnInit {
     // Initialize app
     console.log('Course Management Dashboard initialized');
   }
+
+  
 }
