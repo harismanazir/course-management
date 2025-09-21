@@ -1,5 +1,5 @@
-<mat-card class="course-card" [class.enrolled]="isEnrolled">
-  <!-- Course Image -->
+<div class="modern-course-card" [class.enrolled-card]="isEnrolled">
+  <!-- Course Image Container -->
   <div class="course-image-container">
     <img 
       [src]="course.image" 
@@ -8,129 +8,171 @@
       (error)="$event.target.src='https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop'"
     >
     
-    <!-- Enrollment Badge -->
-    <div class="enrollment-badge" *ngIf="isEnrolled">
-      <mat-icon>check_circle</mat-icon>
-      <span>Enrolled</span>
+    <!-- Image Overlay -->
+    <div class="image-overlay">
+      <!-- Enrollment Badge -->
+      <div class="enrollment-badge" *ngIf="isEnrolled">
+        <mat-icon>check_circle</mat-icon>
+        <span>Enrolled</span>
+      </div>
+
+      <!-- Level Badge -->
+      <div class="level-badge" [ngClass]="'level-' + course.level.toLowerCase()">
+        <mat-icon>{{getLevelIcon(course.level)}}</mat-icon>
+        <span>{{course.level}}</span>
+      </div>
+
+      <!-- Price Badge -->
+      <div class="price-badge" [class.free-badge]="course.price === 0">
+        <span class="price-amount">{{formatPrice(course.price)}}</span>
+      </div>
     </div>
 
-    <!-- Price Badge -->
-    <div class="price-badge" [class.free]="course.price === 0">
-      {{formatPrice(course.price)}}
-    </div>
-
-    <!-- Level Badge -->
-    <div class="level-badge" [ngClass]="'level-' + course.level.toLowerCase()">
-      {{course.level}}
+    <!-- Course Duration Overlay -->
+    <div class="duration-overlay">
+      <mat-icon>schedule</mat-icon>
+      <span>{{formatDuration(course.duration)}}</span>
     </div>
   </div>
 
   <!-- Course Content -->
-  <mat-card-content class="course-content">
-    <!-- Category -->
-    <div class="course-category">
-      <mat-icon>category</mat-icon>
-      <span>{{course.category}}</span>
+  <div class="course-content">
+    <!-- Course Header -->
+    <div class="course-header">
+      <!-- Category -->
+      <div class="course-category">
+        <mat-icon>{{getCategoryIcon(course.category)}}</mat-icon>
+        <span>{{course.category}}</span>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions" *ngIf="showActions">
+        <!-- Admin Actions -->
+        <button mat-icon-button 
+                [routerLink]="['/courses/edit', course.id]"
+                class="action-btn edit-btn"
+                *ngIf="isAdmin"
+                matTooltip="Edit Course">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <!-- Bookmark/Save Action (Future Feature) -->
+        <button mat-icon-button 
+                class="action-btn bookmark-btn"
+                *ngIf="isStudent || !isLoggedIn"
+                matTooltip="Save for Later">
+          <mat-icon>bookmark_border</mat-icon>
+        </button>
+      </div>
     </div>
 
-    <!-- Title -->
+    <!-- Course Title -->
     <h3 class="course-title" [routerLink]="['/courses', course.id]">
       {{course.title}}
     </h3>
 
-    <!-- Instructor -->
-    <div class="course-instructor">
-      <mat-icon>person</mat-icon>
-      <span>{{course.instructor}}</span>
-    </div>
-
-    <!-- Description -->
+    <!-- Course Description -->
     <p class="course-description">
-      {{course.description.length > 120 ? (course.description | slice:0:120) + '...' : course.description}}
+      {{course.description.length > 100 ? (course.description | slice:0:100) + '...' : course.description}}
     </p>
 
-    <!-- Course Meta Info -->
-    <div class="course-meta">
-      <div class="meta-item">
-        <mat-icon>schedule</mat-icon>
-        <span>{{formatDuration(course.duration)}}</span>
+    <!-- Instructor Info -->
+    <div class="instructor-info">
+      <div class="instructor-avatar">
+        <mat-icon>person</mat-icon>
       </div>
-      
-      <div class="meta-item">
-        <mat-icon>people</mat-icon>
-        <span>{{course.studentsEnrolled | number}}</span>
+      <div class="instructor-details">
+        <span class="instructor-name">{{course.instructor}}</span>
+        <span class="instructor-title">Expert Instructor</span>
       </div>
+    </div>
 
-      <div class="meta-item rating-item">
-        <div class="rating-stars">
-          <mat-icon class="star filled" *ngFor="let star of ratingStars">star</mat-icon>
-          <mat-icon class="star half" *ngIf="hasPartialStar">star_half</mat-icon>
-          <mat-icon class="star empty" *ngFor="let star of emptyStars">star_border</mat-icon>
+    <!-- Course Stats -->
+    <div class="course-stats">
+      <!-- Rating -->
+      <div class="stat-item rating-stat">
+        <div class="rating-display">
+          <div class="rating-stars">
+            <mat-icon class="star filled" *ngFor="let star of ratingStars">star</mat-icon>
+            <mat-icon class="star half" *ngIf="hasPartialStar">star_half</mat-icon>
+            <mat-icon class="star empty" *ngFor="let star of emptyStars">star_border</mat-icon>
+          </div>
+          <span class="rating-value">{{course.rating | number:'1.1-1'}}</span>
         </div>
-        <span class="rating-value">{{course.rating | number:'1.1-1'}}</span>
+        <span class="rating-count">({{course.studentsEnrolled | number}})</span>
+      </div>
+
+      <!-- Students Enrolled -->
+      <div class="stat-item">
+        <mat-icon>people</mat-icon>
+        <span>{{course.studentsEnrolled | number}} students</span>
       </div>
     </div>
 
-    <!-- Tags -->
+    <!-- Course Tags -->
     <div class="course-tags" *ngIf="course.tags && course.tags.length > 0">
-      <mat-chip-set>
-        <mat-chip 
-          *ngFor="let tag of course.tags.slice(0, 3)" 
-          class="course-tag">
+      <div class="tags-container">
+        <span class="course-tag" *ngFor="let tag of course.tags.slice(0, 3)">
           {{tag}}
-        </mat-chip>
-        <mat-chip 
-          *ngIf="course.tags.length > 3" 
-          class="course-tag more-tags">
-          +{{course.tags.length - 3}}
-        </mat-chip>
-      </mat-chip-set>
+        </span>
+        <span class="more-tags" *ngIf="course.tags.length > 3">
+          +{{course.tags.length - 3}} more
+        </span>
+      </div>
     </div>
-  </mat-card-content>
+  </div>
 
   <!-- Course Actions -->
-  <mat-card-actions class="course-actions" *ngIf="showActions">
-    <div class="action-buttons">
+  <div class="course-actions" *ngIf="showActions">
+    <div class="action-row">
       <!-- View Details Button -->
-      <button 
-        mat-button 
-        [routerLink]="['/courses', course.id]"
-        class="view-details-btn">
+      <button mat-button 
+              [routerLink]="['/courses', course.id]"
+              class="details-btn">
         <mat-icon>visibility</mat-icon>
-        View Details
+        <span>View Details</span>
       </button>
 
-      <!-- Enroll/Unenroll Button -->
-      <button 
-        mat-raised-button 
-        *ngIf="showEnrollButton && isStudent"
-        (click)="onEnroll()"
-        [class.enrolled-btn]="isEnrolled"
-        class="enroll-btn">
-        <mat-icon>{{isEnrolled ? 'check' : 'add'}}</mat-icon>
-        {{isEnrolled ? 'Enrolled' : 'Enroll Now'}}
-      </button>
+      <!-- Main Action Button -->
+      <div class="main-action">
+        <!-- Student Enroll/Unenroll Button -->
+        <button mat-raised-button 
+                *ngIf="showEnrollButton && isStudent"
+                (click)="onEnroll()"
+                [class]="isEnrolled ? 'enrolled-btn' : 'enroll-btn'"
+                [disabled]="isLoading">
+          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+          <mat-icon *ngIf="!isLoading">{{isEnrolled ? 'check' : 'add'}}</mat-icon>
+          <span>{{isEnrolled ? 'Enrolled' : 'Enroll Now'}}</span>
+        </button>
 
-      <!-- Admin Actions -->
-      <div class="admin-actions" *ngIf="isAdmin">
-        <button 
-          mat-button 
-          [routerLink]="['/courses/edit', course.id]"
-          class="edit-btn">
+        <!-- Admin Edit Button -->
+        <button mat-raised-button 
+                [routerLink]="['/courses/edit', course.id]"
+                class="admin-edit-btn"
+                *ngIf="isAdmin">
           <mat-icon>edit</mat-icon>
-          Edit
+          <span>Edit Course</span>
+        </button>
+
+        <!-- Login Prompt for Non-logged Users -->
+        <button mat-raised-button 
+                routerLink="/auth/login"
+                *ngIf="!isLoggedIn && showEnrollButton"
+                class="login-prompt-btn">
+          <mat-icon>login</mat-icon>
+          <span>Login to Enroll</span>
         </button>
       </div>
-
-      <!-- Login Prompt for Non-logged Users -->
-      <button 
-        mat-raised-button 
-        routerLink="/auth/login"
-        *ngIf="!isLoggedIn && showEnrollButton"
-        class="btn-gradient">
-        <mat-icon>login</mat-icon>
-        Login to Enroll
-      </button>
     </div>
-  </mat-card-actions>
-</mat-card>
+  </div>
+
+  <!-- Progress Bar for Enrolled Students (Future Feature) -->
+  <div class="progress-section" *ngIf="isEnrolled">
+    <div class="progress-info">
+      <span class="progress-label">Course Progress</span>
+      <span class="progress-percentage">65%</span>
+    </div>
+    <mat-progress-bar mode="determinate" value="65" class="course-progress-bar"></mat-progress-bar>
+  </div>
+</div>

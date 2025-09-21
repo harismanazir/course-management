@@ -1,140 +1,232 @@
 <div class="login-page">
+  <!-- Background Elements -->
+  <div class="login-background">
+    <div class="background-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+    <div class="background-pattern"></div>
+  </div>
+
   <div class="login-container">
-    <!-- Login Form -->
-    <div class="form-container fade-in-up">
-      <div class="form-header">
-        <h2>Welcome Back</h2>
-        <p>Sign in to your account to continue learning</p>
-      </div>
-
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-        <!-- Email Field -->
-        <mat-form-field appearance="outline">
-          <mat-label>Email Address</mat-label>
-          <input 
-            matInput 
-            type="email"
-            formControlName="email"
-            placeholder="Enter your email"
-            autocomplete="email">
-          <mat-icon matPrefix>email</mat-icon>
-          <mat-error *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
-            {{getErrorMessage('email')}}
-          </mat-error>
-        </mat-form-field>
-
-        <!-- Password Field -->
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input 
-            matInput 
-            [type]="hidePassword ? 'password' : 'text'"
-            formControlName="password"
-            placeholder="Enter your password"
-            autocomplete="current-password">
-          <mat-icon matPrefix>lock</mat-icon>
-          <button 
-            mat-icon-button 
-            matSuffix 
-            type="button"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-label]="'Hide password'"
-            [attr.aria-pressed]="hidePassword">
-            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-          </button>
-          <mat-error *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
-            {{getErrorMessage('password')}}
-          </mat-error>
-        </mat-form-field>
-
-        <!-- Submit Button -->
-        <button 
-          mat-raised-button 
-          type="submit"
-          class="btn-gradient submit-btn"
-          [disabled]="isLoading">
-          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
-          <mat-icon *ngIf="!isLoading">login</mat-icon>
-          <span>{{isLoading ? 'Signing In...' : 'Sign In'}}</span>
-        </button>
-
-        <!-- Register Link -->
-        <div class="form-footer">
-          <p>
-            Don't have an account? 
-            <a routerLink="/auth/register" class="register-link">Sign up here</a>
-          </p>
+    <!-- Brand Section -->
+    <div class="brand-section">
+      <div class="brand-content">
+        <div class="brand-logo">
+          <mat-icon>school</mat-icon>
         </div>
-      </form>
-
-      <mat-divider class="divider">
-        <span class="divider-text">OR</span>
-      </mat-divider>
-
-      <!-- Demo Accounts Section -->
-      <div class="demo-section">
-        <h3>Try Demo Accounts</h3>
-        <p class="demo-description">Click any button below to quickly sign in and explore the app</p>
-        
-        <div class="demo-accounts">
-          <button 
-            mat-raised-button 
-            *ngFor="let account of demoAccounts"
-            (click)="useDemoAccount(account.email, account.password)"
-            class="demo-btn"
-            [class]="'demo-' + account.role.toLowerCase()"
-            [disabled]="isLoading">
-            <div class="demo-btn-content">
-              <mat-icon>{{account.role === 'Admin' ? 'admin_panel_settings' : 'school'}}</mat-icon>
-              <div class="demo-btn-text">
-                <span class="demo-role">{{account.role}} Demo</span>
-                <span class="demo-email">{{account.email}}</span>
-              </div>
-            </div>
-          </button>
-        </div>
+        <h1 class="brand-title">CourseHub</h1>
+        <p class="brand-subtitle">Transform your future with expert-led learning</p>
       </div>
     </div>
 
-    <!-- Side Information -->
-    <div class="info-panel fade-in-up">
-      <div class="info-content">
-        <div class="info-header">
-          <mat-icon class="info-icon">school</mat-icon>
-          <h3>CourseHub Learning Platform</h3>
+    <!-- Login Form Section -->
+    <div class="form-section">
+      <div class="form-container">
+        <!-- Form Header -->
+        <div class="form-header">
+          <div class="welcome-badge">
+            <mat-icon>waving_hand</mat-icon>
+            <span>Welcome Back</span>
+          </div>
+          <h2>Sign in to your account</h2>
+          <p>Continue your learning journey where you left off</p>
+        </div>
+
+        <!-- Login Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <!-- Email Field -->
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <mat-form-field appearance="outline" class="modern-input">
+              <input 
+                matInput 
+                type="email"
+                formControlName="email"
+                placeholder="Enter your email address"
+                autocomplete="email">
+              <mat-icon matPrefix class="input-icon">email</mat-icon>
+              <mat-error *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
+                {{getErrorMessage('email')}}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <mat-form-field appearance="outline" class="modern-input">
+              <input 
+                matInput 
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password"
+                placeholder="Enter your password"
+                autocomplete="current-password">
+              <mat-icon matPrefix class="input-icon">lock</mat-icon>
+              <button 
+                mat-icon-button 
+                matSuffix 
+                type="button"
+                (click)="togglePasswordVisibility()"
+                class="password-toggle"
+                [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+                {{getErrorMessage('password')}}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <mat-checkbox class="remember-checkbox">
+              Remember me
+            </mat-checkbox>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            mat-raised-button 
+            type="submit"
+            class="submit-btn"
+            [disabled]="isLoading || !loginForm.valid">
+            <mat-spinner diameter="20" *ngIf="isLoading" class="btn-spinner"></mat-spinner>
+            <mat-icon *ngIf="!isLoading" class="btn-icon">login</mat-icon>
+            <span>{{isLoading ? 'Signing In...' : 'Sign In'}}</span>
+          </button>
+
+          <!-- Divider -->
+          <div class="divider">
+            <span class="divider-text">or continue with</span>
+          </div>
+
+          <!-- Demo Accounts Section -->
+          <div class="demo-section">
+            <h3 class="demo-title">Try Demo Accounts</h3>
+            <p class="demo-description">Quick access to explore the platform</p>
+            
+            <div class="demo-accounts">
+              <button 
+                type="button"
+                mat-stroked-button 
+                *ngFor="let account of demoAccounts"
+                (click)="useDemoAccount(account.email, account.password)"
+                class="demo-btn"
+                [class]="'demo-' + account.role.toLowerCase()"
+                [disabled]="isLoading">
+                <div class="demo-btn-content">
+                  <div class="demo-icon">
+                    <mat-icon>{{account.role === 'Admin' ? 'admin_panel_settings' : 'school'}}</mat-icon>
+                  </div>
+                  <div class="demo-info">
+                    <span class="demo-role">{{account.role}} Demo</span>
+                    <span class="demo-email">{{account.email}}</span>
+                  </div>
+                  <mat-icon class="demo-arrow">arrow_forward</mat-icon>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Register Link -->
+          <div class="form-footer">
+            <p class="signup-text">
+              Don't have an account? 
+              <a routerLink="/auth/register" class="signup-link">Create one for free</a>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+      <div class="features-content">
+        <div class="features-header">
+          <div class="features-icon">
+            <mat-icon>workspace_premium</mat-icon>
+          </div>
+          <h3>Why Choose CourseHub?</h3>
+          <p>Join thousands of learners advancing their careers</p>
         </div>
         
         <div class="features-list">
           <div class="feature-item">
-            <mat-icon>check_circle</mat-icon>
-            <span>Access thousands of expert-led courses</span>
+            <div class="feature-icon">
+              <mat-icon>school</mat-icon>
+            </div>
+            <div class="feature-text">
+              <h4>Expert Instructors</h4>
+              <p>Learn from industry professionals with real-world experience</p>
+            </div>
           </div>
+          
           <div class="feature-item">
-            <mat-icon>check_circle</mat-icon>
-            <span>Learn at your own pace</span>
+            <div class="feature-icon">
+              <mat-icon>schedule_flexible</mat-icon>
+            </div>
+            <div class="feature-text">
+              <h4>Flexible Learning</h4>
+              <p>Study at your own pace, on your own schedule</p>
+            </div>
           </div>
+          
           <div class="feature-item">
-            <mat-icon>check_circle</mat-icon>
-            <span>Earn certificates upon completion</span>
+            <div class="feature-icon">
+              <mat-icon>verified</mat-icon>
+            </div>
+            <div class="feature-text">
+              <h4>Certificates</h4>
+              <p>Earn industry-recognized credentials upon completion</p>
+            </div>
           </div>
+          
           <div class="feature-item">
-            <mat-icon>check_circle</mat-icon>
-            <span>Join a community of learners</span>
+            <div class="feature-icon">
+              <mat-icon>support_agent</mat-icon>
+            </div>
+            <div class="feature-text">
+              <h4>24/7 Support</h4>
+              <p>Get help whenever you need it from our support team</p>
+            </div>
           </div>
         </div>
 
-        <div class="stats">
-          <div class="stat">
-            <h4>50K+</h4>
-            <p>Students</p>
+        <!-- Stats -->
+        <div class="stats-section">
+          <div class="stat-item">
+            <div class="stat-number">50K+</div>
+            <div class="stat-label">Students</div>
           </div>
-          <div class="stat">
-            <h4>1000+</h4>
-            <p>Courses</p>
+          <div class="stat-item">
+            <div class="stat-number">1000+</div>
+            <div class="stat-label">Courses</div>
           </div>
-          <div class="stat">
-            <h4>4.8/5</h4>
-            <p>Rating</p>
+          <div class="stat-item">
+            <div class="stat-number">4.8/5</div>
+            <div class="stat-label">Rating</div>
+          </div>
+        </div>
+
+        <!-- Testimonial -->
+        <div class="testimonial">
+          <div class="testimonial-content">
+            <div class="testimonial-quote">
+              <mat-icon>format_quote</mat-icon>
+            </div>
+            <p>"CourseHub transformed my career. The quality of courses and instructors is outstanding!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">
+                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="Sarah M.">
+              </div>
+              <div class="author-info">
+                <span class="author-name">Sarah M.</span>
+                <span class="author-title">Software Engineer</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

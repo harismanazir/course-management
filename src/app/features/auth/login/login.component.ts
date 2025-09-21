@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { AuthService, LoginCredentials } from '../../../shared/services/auth.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { LoadingService } from '../../../shared/services/loading.service';
+import { MatCheckbox } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-login',
@@ -27,7 +28,8 @@ import { LoadingService } from '../../../shared/services/loading.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatDividerModule
+    MatDividerModule,
+    MatCheckbox
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']

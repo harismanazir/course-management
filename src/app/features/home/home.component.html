@@ -1,75 +1,103 @@
-<!-- Hero Section -->
+<!-- Modern Hero Section -->
 <section class="hero-section">
-  <div class="hero-content">
-    <div class="container">
-      <div class="hero-text fade-in-up">
-        <h1 class="hero-title">
-          Master New Skills with 
-          <span class="gradient-text">Expert-Led Courses</span>
-        </h1>
-        <p class="hero-description">
-          Join thousands of learners advancing their careers with our comprehensive 
-          online courses. Learn at your own pace, earn certificates, and transform your future.
-        </p>
-        
-        <div class="hero-actions" *ngIf="!(isLoggedIn$ | async)">
-          <button mat-raised-button 
-                  routerLink="/auth/register" 
-                  class="btn-gradient btn-large">
-            <mat-icon>rocket_launch</mat-icon>
-            Start Learning Today
-          </button>
-          <button mat-stroked-button 
-                  routerLink="/courses" 
-                  class="btn-outline">
-            <mat-icon>explore</mat-icon>
-            Browse Courses
-          </button>
-        </div>
-
-        <div class="hero-actions" *ngIf="currentUser$ | async as user">
-          <button mat-raised-button 
-                  [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
-                  class="btn-gradient btn-large">
-            <mat-icon>dashboard</mat-icon>
-            Go to Dashboard
-          </button>
-          <button mat-stroked-button 
-                  routerLink="/courses" 
-                  class="btn-outline">
-            <mat-icon>library_books</mat-icon>
-            Explore Courses
-          </button>
-        </div>
-      </div>
-
-      <!-- Stats Section -->
-      <div class="hero-stats fade-in-up">
-        <div class="stat-item">
-          <h3>{{stats.totalCourses}}+</h3>
-          <p>Expert Courses</p>
-        </div>
-        <div class="stat-item">
-          <h3>{{stats.totalStudents}}+</h3>
-          <p>Active Students</p>
-        </div>
-        <div class="stat-item">
-          <h3>{{stats.averageRating}}/5</h3>
-          <p>Average Rating</p>
-        </div>
-        <div class="stat-item">
-          <h3>{{stats.categoriesCount}}+</h3>
-          <p>Categories</p>
-        </div>
-      </div>
+  <div class="hero-background">
+    <div class="hero-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="hero-gradient-overlay"></div>
     </div>
   </div>
   
-  <!-- Hero Background Elements -->
-  <div class="hero-bg-elements">
-    <div class="bg-circle circle-1"></div>
-    <div class="bg-circle circle-2"></div>
-    <div class="bg-circle circle-3"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge fade-in-up">
+        <mat-icon>auto_awesome</mat-icon>
+        <span>Transform Your Future with Learning</span>
+      </div>
+      
+      <h1 class="hero-title fade-in-up">
+        Master New Skills with 
+        <span class="gradient-text">Expert-Led Courses</span>
+      </h1>
+      
+      <p class="hero-description fade-in-up">
+        Join thousands of learners advancing their careers with our comprehensive 
+        online courses. Learn at your own pace, earn certificates, and unlock new opportunities.
+      </p>
+      
+      <!-- Hero Actions -->
+      <div class="hero-actions fade-in-up" *ngIf="!(isLoggedIn$ | async)">
+        <button mat-raised-button 
+                routerLink="/auth/register" 
+                class="btn btn-primary btn-lg hero-cta">
+          <mat-icon>rocket_launch</mat-icon>
+          <span>Start Learning Today</span>
+        </button>
+        <button mat-stroked-button 
+                routerLink="/courses" 
+                class="btn btn-outline btn-lg hero-secondary">
+          <mat-icon>explore</mat-icon>
+          <span>Browse Courses</span>
+        </button>
+      </div>
+
+      <!-- Logged In User Actions -->
+      <div class="hero-actions fade-in-up" *ngIf="currentUser$ | async as user">
+        <button mat-raised-button 
+                [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
+                class="btn btn-primary btn-lg hero-cta">
+          <mat-icon>dashboard</mat-icon>
+          <span>Go to Dashboard</span>
+        </button>
+        <button mat-stroked-button 
+                routerLink="/courses" 
+                class="btn btn-outline btn-lg hero-secondary">
+          <mat-icon>library_books</mat-icon>
+          <span>Explore Courses</span>
+        </button>
+      </div>
+
+      <!-- Hero Stats -->
+      <div class="hero-stats fade-in-up">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <mat-icon>school</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.totalCourses}}+</h3>
+            <p>Expert Courses</p>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <mat-icon>people</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.totalStudents}}+</h3>
+            <p>Active Students</p>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <mat-icon>star</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.averageRating}}/5</h3>
+            <p>Average Rating</p>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <mat-icon>category</mat-icon>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.categoriesCount}}+</h3>
+            <p>Categories</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -77,18 +105,26 @@
 <section class="features-section">
   <div class="container">
     <div class="section-header text-center">
-      <h2>Why Choose CourseHub?</h2>
-      <p>Everything you need to succeed in your learning journey</p>
+      <!-- <div class="section-badge">
+        <mat-icon>workspace_premium</mat-icon>
+        <span>Why Choose CourseHub</span>
+      </div> -->
+      <h2>Everything you need to succeed in your learning journey</h2>
+      <!-- <p>Discover the features that make our platform the perfect choice for learners worldwide</p> -->
     </div>
 
     <div class="features-grid grid grid-4">
-      <div class="feature-card card-elevated fade-in-up" 
+      <div class="feature-card card card-elevated fade-in-up" 
            *ngFor="let feature of features; trackBy: trackByFeature">
-        <div class="feature-icon">
-          <mat-icon>{{feature.icon}}</mat-icon>
+        <div class="feature-icon-wrapper">
+          <div class="feature-icon">
+            <mat-icon>{{feature.icon}}</mat-icon>
+          </div>
         </div>
-        <h3>{{feature.title}}</h3>
-        <p>{{feature.description}}</p>
+        <div class="feature-content">
+          <h3>{{feature.title}}</h3>
+          <p>{{feature.description}}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -98,53 +134,98 @@
 <section class="courses-section">
   <div class="container">
     <div class="section-header">
-      <h2>Featured Courses</h2>
-      <p>Start your learning journey with our most popular courses</p>
-      <button mat-button 
-              routerLink="/courses" 
-              class="view-all-btn">
-        View All Courses
-        <mat-icon>arrow_forward</mat-icon>
-      </button>
+      <div class="section-header-content">
+        <div class="section-badge">
+          <mat-icon>auto_stories</mat-icon>
+          <span>Featured Courses</span>
+        </div>
+        <h2>Start your learning journey with our most popular courses</h2>
+        <p>Carefully curated courses designed by industry experts to help you achieve your goals</p>
+      </div>
+      <div class="section-header-action">
+        <button mat-raised-button 
+                routerLink="/courses" 
+                class="btn btn-primary view-all-btn">
+          <span>View All Courses</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
     </div>
 
-<div class="courses-grid grid grid-3" *ngIf="featuredCourses$ | async as courses">
-  <app-course-card 
-    *ngFor="let course of courses; trackBy: trackByCourse" 
-    [course]="course"
-    [isEnrolled]="false"
-    class="fade-in-up">
-  </app-course-card>
-</div>
+    <!-- Featured Courses Grid -->
+    <div class="courses-grid grid grid-3" *ngIf="featuredCourses$ | async as courses">
+      <app-course-card 
+        *ngFor="let course of courses; trackBy: trackByCourse" 
+        [course]="course"
+        [isEnrolled]="false"
+        class="fade-in-up course-card-wrapper">
+      </app-course-card>
+    </div>
 
     <!-- Empty State -->
     <div class="empty-state" *ngIf="(featuredCourses$ | async)?.length === 0">
-      <mat-icon>school</mat-icon>
-      <h3>No courses available</h3>
-      <p>Check back later for exciting new courses!</p>
+      <div class="empty-icon">
+        <mat-icon>school</mat-icon>
+      </div>
+      <h3>No courses available yet</h3>
+      <p>We're working hard to bring you amazing courses. Check back soon!</p>
+      <button mat-raised-button 
+              routerLink="/auth/register" 
+              class="btn btn-primary"
+              *ngIf="!(isLoggedIn$ | async)">
+        <mat-icon>notifications</mat-icon>
+        <span>Get Notified</span>
+      </button>
     </div>
   </div>
 </section>
 
-<!-- CTA Section -->
+<!-- CTA Section for Non-logged Users -->
 <section class="cta-section" *ngIf="!(isLoggedIn$ | async)">
+  <div class="cta-background">
+    <div class="cta-shapes">
+      <div class="cta-shape cta-shape-1"></div>
+      <div class="cta-shape cta-shape-2"></div>
+    </div>
+  </div>
+  
   <div class="container">
     <div class="cta-content">
       <div class="cta-text">
+        <div class="cta-badge">
+          <mat-icon>celebration</mat-icon>
+          <span>Ready to Start?</span>
+        </div>
         <h2>Ready to Start Learning?</h2>
-        <p>Join our community of learners and take the next step in your career</p>
+        <p>Join our community of learners and take the next step in your career journey</p>
+        
+        <div class="cta-features">
+          <div class="cta-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>Free access to select courses</span>
+          </div>
+          <div class="cta-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>Expert instructor support</span>
+          </div>
+          <div class="cta-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>Industry-recognized certificates</span>
+          </div>
+        </div>
       </div>
+      
       <div class="cta-actions">
         <button mat-raised-button 
                 routerLink="/auth/register" 
-                class="btn-gradient btn-large">
+                class="btn btn-secondary btn-xl cta-primary">
           <mat-icon>person_add</mat-icon>
-          Create Account
+          <span>Create Free Account</span>
         </button>
         <button mat-button 
                 routerLink="/courses" 
-                class="btn-text">
-          Browse Courses
+                class="btn btn-ghost cta-link">
+          <span>Browse Courses</span>
           <mat-icon>arrow_forward</mat-icon>
         </button>
       </div>
@@ -154,30 +235,79 @@
 
 <!-- Welcome Back Section for Logged-in Users -->
 <section class="welcome-section" *ngIf="currentUser$ | async as user">
+  <div class="welcome-background">
+    <div class="welcome-pattern"></div>
+  </div>
+  
   <div class="container">
     <div class="welcome-content">
       <div class="welcome-text">
-        <h2>Welcome back, {{user.name}}!</h2>
-        <p *ngIf="user.role === 'student'">
-          Continue your learning journey or explore new courses
-        </p>
-        <p *ngIf="user.role === 'admin'">
-          Manage your courses and track student progress
-        </p>
+        <div class="welcome-avatar">
+          <img [src]="user.avatar" [alt]="user.name" *ngIf="user.avatar" class="user-image">
+          <mat-icon *ngIf="!user.avatar" class="user-icon">account_circle</mat-icon>
+        </div>
+        <div class="welcome-info">
+          <h2>Welcome back, {{user.name}}! 👋</h2>
+          <p *ngIf="user.role === 'student'">
+            Continue your learning journey or explore new courses to expand your skills
+          </p>
+          <p *ngIf="user.role === 'admin'">
+            Manage your courses, track student progress, and grow your platform
+          </p>
+        </div>
       </div>
+      
       <div class="welcome-actions">
         <button mat-raised-button 
                 [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
-                class="btn-gradient">
+                class="btn btn-primary welcome-cta">
           <mat-icon>dashboard</mat-icon>
-          Go to Dashboard
+          <span>Go to Dashboard</span>
         </button>
-        <button mat-button 
+        <button mat-stroked-button 
                 routerLink="/courses/add" 
+                class="btn btn-outline welcome-secondary"
                 *ngIf="user.role === 'admin'">
-          <mat-icon>add</mat-icon>
-          Add New Course
+          <mat-icon>add_circle</mat-icon>
+          <span>Add New Course</span>
         </button>
+        <button mat-stroked-button 
+                routerLink="/courses" 
+                class="btn btn-outline welcome-secondary"
+                *ngIf="user.role === 'student'">
+          <mat-icon>explore</mat-icon>
+          <span>Explore Courses</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust Indicators Section -->
+<section class="trust-section" *ngIf="!(isLoggedIn$ | async)">
+  <div class="container">
+    <div class="trust-content">
+      <div class="trust-header">
+        <p class="trust-subtitle">Trusted by learners worldwide</p>
+      </div>
+      
+      <div class="trust-stats">
+        <div class="trust-stat">
+          <div class="trust-number">50K+</div>
+          <div class="trust-label">Students Enrolled</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-number">1000+</div>
+          <div class="trust-label">Courses Available</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-number">95%</div>
+          <div class="trust-label">Completion Rate</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-number">4.8/5</div>
+          <div class="trust-label">Average Rating</div>
+        </div>
       </div>
     </div>
   </div>
