@@ -14,17 +14,11 @@ export const authGuard: CanActivateFn = (route, state) => {
       if (isLoggedIn && authService.validateToken()) {
         return true;
       } else {
-        // Clear invalid token
         authService.logout();
-        
-        // Show notification
         notificationService.warning('Please log in to access this page');
-        
-        // Redirect to login with return URL
         router.navigate(['/auth/login'], {
           queryParams: { returnUrl: state.url }
         });
-        
         return false;
       }
     })

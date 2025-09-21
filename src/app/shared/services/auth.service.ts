@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
-import { map, tap, catchError, switchMap, retry } from 'rxjs/operators';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
@@ -44,64 +44,39 @@ export class AuthService {
 
   private async initializeAuthState() {
     try {
-      console.log('Initializing auth state...');
-      
-      const { data: { session }, error } = await this.supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        return;
-      }
+      const { data: { session } } = await this.supabase.auth.getSession();
       
       if (session?.user) {
-        console.log('Found existing session for user:', session.user.id);
-        await this.setCurrentUser(session.user.id);
-      } else {
-        console.log('No existing session found');
-        this.currentUserSubject.next(null);
-        this.isLoggedInSubject.next(false);
+        await this.setCurrentUserFromAuthUser(session.user);
       }
 
       // Listen for auth changes
       this.supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in:', session.user.id);
-          await this.setCurrentUser(session.user.id);
+          await this.setCurrentUserFromAuthUser(session.user);
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
           this.currentUserSubject.next(null);
           this.isLoggedInSubject.next(false);
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log('Token refreshed for user:', session.user.id);
-          // Don't refetch profile on token refresh, just ensure user is still set
-          if (!this.currentUserSubject.value) {
-            await this.setCurrentUser(session.user.id);
-          }
         }
       });
     } catch (error) {
-      console.error('Error initializing auth state:', error);
-      this.currentUserSubject.next(null);
-      this.isLoggedInSubject.next(false);
+      console.error('Auth init error:', error);
     }
   }
 
-  private async setCurrentUser(userId: string) {
+  private async setCurrentUserFromAuthUser(authUser: any): Promise<User | null> {
     try {
+      // First try to get from database
       const { data: profile, error } = await this.supabase.from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', authUser.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
+      let user: User;
 
-      if (profile) {
-        const user: User = {
+      if (profile && !error) {
+        // Profile exists in database
+        user = {
           id: profile.id,
           email: profile.email,
           name: profile.name,
@@ -109,17 +84,38 @@ export class AuthService {
           avatar: profile.avatar || undefined,
           createdAt: new Date(profile.created_at)
         };
+      } else {
+        // Create user from auth metadata if profile doesn't exist
+        console.log('Profile not found, creating from auth user:', authUser);
         
-        this.currentUserSubject.next(user);
-        this.isLoggedInSubject.next(true);
-        console.log('User set:', user);
+        const name = authUser.user_metadata?.['name'] || authUser.email?.split('@')[0] || 'User';
+        const role = authUser.user_metadata?.['role'] || 'student';
+        
+        user = {
+          id: authUser.id,
+          email: authUser.email,
+          name: name,
+          role: role as 'student' | 'admin',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=667eea&color=fff&size=150`,
+          createdAt: new Date(authUser.created_at)
+        };
+
+        // Try to create profile in database (don't wait for it)
+        this.createProfileInBackground(user);
       }
+      
+      this.currentUserSubject.next(user);
+      this.isLoggedInSubject.next(true);
+      return user;
     } catch (error) {
-      console.error('Error setting current user:', error);
+      console.error('Error setting user:', error);
+      return null;
     }
   }
 
   login(credentials: LoginCredentials): Observable<User> {
+    console.log('🔐 Logging in:', credentials.email);
+    
     return from(
       this.supabase.auth.signInWithPassword({
         email: credentials.email,
@@ -127,31 +123,46 @@ export class AuthService {
       })
     ).pipe(
       switchMap(({ data, error }) => {
+        console.log('🔐 Login response:', { user: data.user?.id, error });
+        
         if (error) {
-          console.error('Login error:', error);
-          throw new Error(error.message || 'Login failed');
+          throw new Error(error.message);
         }
         
         if (!data.user) {
-          throw new Error('No user returned from login');
+          throw new Error('Login failed');
         }
         
-        return this.getUserProfile(data.user.id);
-      }),
-      tap(user => {
+        // Create user object from auth response immediately
+        const authUser = data.user;
+        const name = authUser.user_metadata?.['name'] || authUser.email?.split('@')[0] || 'User';
+        const role = authUser.user_metadata?.['role'] || 'student';
+        
+        const user: User = {
+          id: authUser.id,
+          email: authUser.email!,
+          name: name,
+          role: role as 'student' | 'admin',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=667eea&color=fff&size=150`,
+          createdAt: new Date(authUser.created_at!)
+        };
+        
+        // Set user state immediately
         this.currentUserSubject.next(user);
         this.isLoggedInSubject.next(true);
-        console.log('Login successful:', user);
+        
+        console.log('✅ User logged in:', user);
+        return of(user);
       }),
       catchError(error => {
-        console.error('Login process error:', error);
+        console.error('❌ Login error:', error);
         return throwError(() => new Error(error.message || 'Login failed'));
       })
     );
   }
 
   register(registerData: RegisterData): Observable<User> {
-    console.log('Starting registration process for:', registerData.email);
+    console.log('📝 Registering:', registerData.email);
     
     return from(
       this.supabase.auth.signUp({
@@ -166,140 +177,67 @@ export class AuthService {
       })
     ).pipe(
       switchMap(({ data, error }) => {
-        console.log('Registration response:', { data: data?.user?.id, error });
+        console.log('📝 Register response:', { user: data.user?.id, error });
         
         if (error) {
-          console.error('Supabase registration error:', error);
-          throw new Error(error.message || 'Registration failed');
+          throw new Error(error.message);
         }
         
         if (!data.user) {
-          throw new Error('Registration failed - no user created');
+          throw new Error('Registration failed');
         }
 
-        console.log('User created successfully, waiting for profile...');
+        // Create user object immediately
+        const user: User = {
+          id: data.user.id,
+          email: data.user.email!,
+          name: registerData.name,
+          role: registerData.role || 'student',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(registerData.name)}&background=667eea&color=fff&size=150`,
+          createdAt: new Date()
+        };
         
-        // Wait longer for the trigger to create the profile
-        return from(
-          new Promise<string>(resolve => {
-            setTimeout(() => {
-              console.log('Attempting to fetch user profile...');
-              resolve(data.user!.id);
-            }, 2000); // Increased wait time
-          })
-        ).pipe(
-          switchMap(userId => this.getUserProfile(userId)),
-          retry(3), // Retry up to 3 times if profile fetch fails
-          catchError(profileError => {
-            console.error('Profile fetch failed, creating manually:', profileError);
-            // If profile doesn't exist, try to create it manually
-            return this.createProfileManually(data.user!, registerData);
-          })
-        );
-      }),
-      tap(user => {
+        // Set user state immediately
         this.currentUserSubject.next(user);
         this.isLoggedInSubject.next(true);
-        console.log('Registration completed successfully:', user);
+        
+        // Try to create profile in database (don't wait)
+        this.createProfileInBackground(user);
+        
+        console.log('✅ User registered:', user);
+        return of(user);
       }),
       catchError(error => {
-        console.error('Registration process failed:', error);
+        console.error('❌ Registration error:', error);
         return throwError(() => new Error(error.message || 'Registration failed'));
       })
     );
   }
 
-  private createProfileManually(authUser: any, registerData: RegisterData): Observable<User> {
-    console.log('Creating profile manually for user:', authUser.id);
-    
-    const profileData = {
-      id: authUser.id,
-      email: authUser.email,
-      name: registerData.name,
-      role: registerData.role || 'student',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(registerData.name)}&background=667eea&color=fff&size=150`
-    };
-
-    return from(
-      this.supabase.from('profiles').insert(profileData).select().single()
-    ).pipe(
-      map(({ data, error }) => {
-        if (error) {
-          console.error('Manual profile creation failed:', error);
-          throw new Error('Failed to create user profile');
-        }
-        
-        console.log('Profile created manually:', data);
-        return {
-          id: data.id,
-          email: data.email,
-          name: data.name,
-          role: data.role as 'student' | 'admin',
-          avatar: data.avatar || undefined,
-          createdAt: new Date(data.created_at)
-        };
-      })
-    );
-  }
-
-  private getUserProfile(userId: string): Observable<User> {
-    return from(
-      this.supabase.from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-    ).pipe(
-      map(({ data, error }) => {
-        if (error) {
-          console.error('Profile fetch error:', error);
-          throw new Error('Profile not found');
-        }
-        
-        if (!data) {
-          throw new Error('Profile data not found');
-        }
-
-        return {
-          id: data.id,
-          email: data.email,
-          name: data.name,
-          role: data.role as 'student' | 'admin',
-          avatar: data.avatar || undefined,
-          createdAt: new Date(data.created_at)
-        };
-      }),
-      catchError(error => {
-        console.error('getUserProfile error:', error);
-        return throwError(() => error);
-      })
-    );
+  private async createProfileInBackground(user: User): Promise<void> {
+    try {
+      await this.supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        avatar: user.avatar
+      });
+      console.log('✅ Profile created in database');
+    } catch (err) {
+      console.log('Profile creation failed, but continuing:', err);
+    }
   }
 
   async logout(): Promise<void> {
     try {
-      console.log('Starting logout process...');
-      
-      // Clear local state first
       this.currentUserSubject.next(null);
       this.isLoggedInSubject.next(false);
       
-      // Sign out from Supabase
-      const { error } = await this.supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Supabase logout error:', error);
-        // Don't throw error, just log it since we already cleared local state
-      }
-      
-      console.log('Logout completed successfully');
-      
-      // Navigate to home page
+      await this.supabase.auth.signOut();
       this.router.navigate(['/']);
-      
     } catch (error) {
-      console.error('Logout process error:', error);
-      
-      // Even if there's an error, ensure local state is cleared
+      console.error('Logout error:', error);
       this.currentUserSubject.next(null);
       this.isLoggedInSubject.next(false);
       this.router.navigate(['/']);
@@ -333,17 +271,9 @@ export class AuthService {
         progress: 0
       })
     ).pipe(
-      switchMap(() => 
-        // Update students_enrolled count
-        from(this.supabase.client.rpc('increment_students_enrolled', { course_id: courseId }))
-      ),
-      map(() => {
-        console.log('Enrollment successful for course:', courseId);
-        return true;
-      }),
+      map(() => true),
       catchError(error => {
-        console.error('Enrollment error:', error);
-        if (error.code === '23505') { // Unique constraint violation
+        if (error.code === '23505') {
           return throwError(() => new Error('Already enrolled in this course'));
         }
         return throwError(() => new Error('Failed to enroll in course'));
@@ -363,16 +293,8 @@ export class AuthService {
         .eq('user_id', user.id)
         .eq('course_id', courseId)
     ).pipe(
-      switchMap(() => 
-        // Decrement students_enrolled count
-        from(this.supabase.client.rpc('decrement_students_enrolled', { course_id: courseId }))
-      ),
-      map(() => {
-        console.log('Unenrollment successful for course:', courseId);
-        return true;
-      }),
+      map(() => true),
       catchError(error => {
-        console.error('Unenrollment error:', error);
         return throwError(() => new Error('Failed to unenroll from course'));
       })
     );
@@ -389,23 +311,19 @@ export class AuthService {
         .eq('course_id', courseId)
         .maybeSingle()
     ).pipe(
-      map(({ data, error }) => {
-        if (error) {
-          console.error('Error checking enrollment:', error);
-          return false;
-        }
-        return !!data;
-      }),
-      catchError(error => {
-        console.error('isEnrolledInCourse error:', error);
-        return of(false);
-      })
+      map(({ data }) => !!data),
+      catchError(() => of(false))
     );
   }
 
   getEnrolledCourses(): Observable<string[]> {
     const user = this.getCurrentUser();
-    if (!user) return of([]);
+    if (!user) {
+      console.log('❌ No user logged in for enrollments');
+      return of([]);
+    }
+
+    console.log('🔍 Fetching enrolled courses for user:', user.id);
 
     return from(
       this.supabase.from('enrollments')
@@ -414,13 +332,15 @@ export class AuthService {
     ).pipe(
       map(({ data, error }) => {
         if (error) {
-          console.error('Error fetching enrolled courses:', error);
+          console.error('❌ Error fetching enrolled courses:', error);
           return [];
         }
-        return data?.map((enrollment: any) => enrollment.course_id) || [];
+        const courseIds = data?.map((enrollment: any) => enrollment.course_id) || [];
+        console.log('✅ Enrolled course IDs:', courseIds);
+        return courseIds;
       }),
-      catchError(error => {
-        console.error('getEnrolledCourses error:', error);
+      catchError(() => {
+        console.log('❌ Failed to fetch enrollments, returning empty array');
         return of([]);
       })
     );
@@ -444,7 +364,6 @@ export class AuthService {
     ).pipe(
       map(({ data, error }) => {
         if (error) {
-          console.error('Profile update error:', error);
           throw new Error('Failed to update profile');
         }
         
@@ -457,15 +376,11 @@ export class AuthService {
         this.currentUserSubject.next(updatedUser);
         return updatedUser;
       }),
-      catchError(error => {
-        console.error('updateProfile error:', error);
-        return throwError(() => new Error('Failed to update profile'));
-      })
+      catchError(() => throwError(() => new Error('Failed to update profile')))
     );
   }
 
   validateToken(): boolean {
-    // With Supabase, we rely on the auth state listener
     return this.isLoggedInSubject.value;
   }
 }

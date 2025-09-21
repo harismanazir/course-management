@@ -9,11 +9,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatCheckbox } from '@angular/material/checkbox';
 
 import { AuthService, LoginCredentials } from '../../../shared/services/auth.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { LoadingService } from '../../../shared/services/loading.service';
-import { MatCheckbox } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-login',
@@ -40,14 +39,12 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
-  private loadingService = inject(LoadingService);
 
   loginForm!: FormGroup;
   hidePassword = true;
   isLoading = false;
   returnUrl = '/';
 
-  // Demo credentials for easy testing
   demoAccounts = [
     { email: 'admin@courseapp.com', password: 'admin123', role: 'Admin' },
     { email: 'student@courseapp.com', password: 'student123', role: 'Student' },
@@ -74,36 +71,28 @@ export class LoginComponent implements OnInit {
   private checkIfAlreadyLoggedIn(): void {
     this.authService.isLoggedIn$.subscribe(isLoggedIn => {
       if (isLoggedIn) {
-        this.router.navigate([this.returnUrl]);
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          this.navigateAfterLogin(user);
+        }
       }
     });
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
+    if (this.loginForm.valid && !this.isLoading) {
       this.isLoading = true;
-      this.loadingService.show();
-
       const credentials: LoginCredentials = this.loginForm.value;
 
       this.authService.login(credentials).subscribe({
         next: (user) => {
+          this.isLoading = false;
           this.notificationService.success(`Welcome back, ${user.name}!`);
-          
-          // Navigate based on user role or return URL
-          if (this.returnUrl !== '/') {
-            this.router.navigate([this.returnUrl]);
-          } else {
-            const dashboardUrl = user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student';
-            this.router.navigate([dashboardUrl]);
-          }
+          this.navigateAfterLogin(user);
         },
         error: (error) => {
-          this.notificationService.error(error.message || 'Login failed. Please try again.');
-        },
-        complete: () => {
           this.isLoading = false;
-          this.loadingService.hide();
+          this.notificationService.error(error.message || 'Login failed. Please try again.');
         }
       });
     } else {
@@ -111,7 +100,19 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  private navigateAfterLogin(user: any): void {
+    // Force navigation immediately
+    if (this.returnUrl !== '/') {
+      this.router.navigateByUrl(this.returnUrl);
+    } else {
+      const dashboardUrl = user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student';
+      this.router.navigateByUrl(dashboardUrl);
+    }
+  }
+
   useDemoAccount(email: string, password: string): void {
+    if (this.isLoading) return;
+    
     this.loginForm.patchValue({ email, password });
     this.onSubmit();
   }

@@ -13,7 +13,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService, RegisterData } from '../../../shared/services/auth.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { LoadingService } from '../../../shared/services/loading.service';
 
 @Component({
   selector: 'app-register',
@@ -39,7 +38,6 @@ export class RegisterComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
-  private loadingService = inject(LoadingService);
 
   registerForm!: FormGroup;
   hidePassword = true;
@@ -72,7 +70,7 @@ export class RegisterComponent implements OnInit {
   private checkIfAlreadyLoggedIn(): void {
     this.authService.isLoggedIn$.subscribe(isLoggedIn => {
       if (isLoggedIn) {
-        this.router.navigate(['/dashboard']);
+        this.router.navigateByUrl('/dashboard');
       }
     });
   }
@@ -111,25 +109,19 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.registerForm.valid) {
+    if (this.registerForm.valid && !this.isLoading) {
       this.isLoading = true;
-      this.loadingService.show();
 
       const { confirmPassword, terms, ...registerData }: RegisterData & { confirmPassword: string; terms: boolean } = this.registerForm.value;
 
-      console.log('Attempting registration with:', { ...registerData, password: '[HIDDEN]' });
-
       this.authService.register(registerData).subscribe({
         next: (user) => {
-          console.log('Registration successful:', user);
+          this.isLoading = false;
           this.notificationService.success(`Welcome to CourseHub, ${user.name}!`);
-          
-          // Navigate to appropriate dashboard
-          const dashboardUrl = user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student';
-          this.router.navigate([dashboardUrl]);
+          this.navigateAfterRegistration(user);
         },
         error: (error) => {
-          console.error('Registration failed:', error);
+          this.isLoading = false;
           
           let errorMessage = 'Registration failed. Please try again.';
           if (error.message) {
@@ -143,16 +135,18 @@ export class RegisterComponent implements OnInit {
           }
           
           this.notificationService.error(errorMessage);
-        },
-        complete: () => {
-          this.isLoading = false;
-          this.loadingService.hide();
         }
       });
     } else {
       this.markFormGroupTouched();
       this.notificationService.warning('Please fill in all required fields correctly');
     }
+  }
+
+  private navigateAfterRegistration(user: any): void {
+    // Force navigation immediately
+    const dashboardUrl = user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student';
+    this.router.navigateByUrl(dashboardUrl);
   }
 
   private markFormGroupTouched(): void {
