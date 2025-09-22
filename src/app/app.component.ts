@@ -41,12 +41,12 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
       <footer class="app-footer">
         <div class="container">
           <div class="footer-content">
-            <div class="footer-section">
-              <h4>Course Management</h4>
+            <div class="footer-brand">
+              <h4>Course Commons</h4>
               <p>Empowering education through technology</p>
             </div>
-            <div class="footer-section">
-              <p>&copy; 2024 Course Management Dashboard. All rights reserved.</p>
+            <div class="footer-copyright">
+              <p>&copy; 2025 All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -94,28 +94,52 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
     }
 
     .app-footer {
-      background: var(--dark-gradient);
+      background: #1f2937;
       color: white;
       padding: 40px 0;
       margin-top: 60px;
+      text-align: center;
     }
 
     .footer-content {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 32px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
-    .footer-section h4 {
+    .footer-brand {
+      text-align: center;
+    }
+
+    .footer-brand h4 {
       color: white;
       margin-bottom: 12px;
-      font-size: 1.25rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-heading, 'Poppins', sans-serif);
     }
 
-    .footer-section p {
+    .footer-brand p {
       color: rgba(255, 255, 255, 0.8);
       margin-bottom: 0;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .footer-copyright {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+    }
+
+    .footer-copyright p {
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0;
+      font-size: 0.875rem;
     }
 
     @media (max-width: 768px) {
@@ -123,9 +147,37 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
         padding-top: 56px;
       }
       
+      .app-footer {
+        padding: 30px 0;
+        margin-top: 40px;
+      }
+
       .footer-content {
-        text-align: center;
-        gap: 24px;
+        gap: 20px;
+        padding: 0 20px;
+      }
+
+      .footer-brand h4 {
+        font-size: 1.25rem;
+      }
+
+      .footer-brand p {
+        font-size: 0.875rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .app-footer {
+        padding: 24px 0;
+      }
+
+      .footer-content {
+        gap: 16px;
+        padding: 0 16px;
+      }
+
+      .footer-brand h4 {
+        font-size: 1.125rem;
       }
     }
   `]
@@ -138,6 +190,4 @@ export class AppComponent implements OnInit {
     // Initialize app
     console.log('Course Management Dashboard initialized');
   }
-
-  
 }

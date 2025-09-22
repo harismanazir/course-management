@@ -560,116 +560,6 @@
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Welcome Section */
-.welcome-section {
-  position: relative;
-  padding: var(--spacing-3xl) 0;
-  background: var(--secondary-gradient);
-  color: white;
-  overflow: hidden;
-}
-
-.welcome-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-}
-
-.welcome-pattern {
-  width: 100%;
-  height: 100%;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><circle cx="30" cy="30" r="2"/></g></g></svg>');
-}
-
-.welcome-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-2xl);
-  flex-wrap: wrap;
-}
-
-.welcome-text {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-  flex: 1;
-}
-
-.welcome-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.2);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
-}
-
-.user-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-icon {
-  font-size: 48px !important;
-  width: 48px;
-  height: 48px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.welcome-info h2 {
-  font-family: var(--font-heading);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  margin-bottom: var(--spacing-sm);
-  color: white;
-}
-
-.welcome-info p {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  line-height: 1.6;
-}
-
-.welcome-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.welcome-cta {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: var(--secondary-color) !important;
-  box-shadow: var(--shadow-lg) !important;
-}
-
-.welcome-cta:hover {
-  background: white !important;
-  transform: translateY(-2px) !important;
-}
-
-.welcome-secondary {
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  color: white !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.welcome-secondary:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: white !important;
-}
-
 /* Trust Section */
 .trust-section {
   padding: var(--spacing-2xl) 0;
@@ -813,28 +703,6 @@
     padding: var(--spacing-xl);
   }
   
-  .welcome-content {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-xl);
-  }
-  
-  .welcome-text {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-lg);
-  }
-  
-  .welcome-actions {
-    justify-content: center;
-    width: 100%;
-  }
-  
-  .welcome-actions button {
-    flex: 1;
-    min-width: 140px;
-  }
-  
   .cta-features {
     max-width: none;
   }
@@ -908,26 +776,6 @@
     line-height: 1.4;
     /* Even better mobile text handling */
     word-break: break-word;
-  }
-  
-  .welcome-avatar {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .user-icon {
-    font-size: 36px !important;
-    width: 36px;
-    height: 36px;
-  }
-  
-  .welcome-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-  
-  .welcome-actions button {
-    width: 100%;
   }
   
   .trust-stats {
@@ -1018,9 +866,7 @@
 .hero-secondary:focus-visible,
 .view-all-btn:focus-visible,
 .cta-primary:focus-visible,
-.cta-link:focus-visible,
-.welcome-cta:focus-visible,
-.welcome-secondary:focus-visible {
+.cta-link:focus-visible {
   outline: 3px solid var(--accent-color);
   outline-offset: 2px;
 }

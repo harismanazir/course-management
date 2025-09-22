@@ -233,56 +233,6 @@
   </div>
 </section>
 
-<!-- Welcome Back Section for Logged-in Users -->
-<section class="welcome-section" *ngIf="currentUser$ | async as user">
-  <div class="welcome-background">
-    <div class="welcome-pattern"></div>
-  </div>
-  
-  <div class="container">
-    <div class="welcome-content">
-      <div class="welcome-text">
-        <div class="welcome-avatar">
-          <img [src]="user.avatar" [alt]="user.name" *ngIf="user.avatar" class="user-image">
-          <mat-icon *ngIf="!user.avatar" class="user-icon">account_circle</mat-icon>
-        </div>
-        <div class="welcome-info">
-          <h2>Welcome back, {{user.name}}! 👋</h2>
-          <p *ngIf="user.role === 'student'">
-            Continue your learning journey or explore new courses to expand your skills
-          </p>
-          <p *ngIf="user.role === 'admin'">
-            Manage your courses, track student progress, and grow your platform
-          </p>
-        </div>
-      </div>
-      
-      <div class="welcome-actions">
-        <button mat-raised-button 
-                [routerLink]="user.role === 'admin' ? '/dashboard/admin' : '/dashboard/student'" 
-                class="btn btn-primary welcome-cta">
-          <mat-icon>dashboard</mat-icon>
-          <span>Go to Dashboard</span>
-        </button>
-        <button mat-stroked-button 
-                routerLink="/courses/add" 
-                class="btn btn-outline welcome-secondary"
-                *ngIf="user.role === 'admin'">
-          <mat-icon>add_circle</mat-icon>
-          <span>Add New Course</span>
-        </button>
-        <button mat-stroked-button 
-                routerLink="/courses" 
-                class="btn btn-outline welcome-secondary"
-                *ngIf="user.role === 'student'">
-          <mat-icon>explore</mat-icon>
-          <span>Explore Courses</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Trust Indicators Section -->
 <section class="trust-section" *ngIf="!(isLoggedIn$ | async)">
   <div class="container">
@@ -304,10 +254,7 @@
           <div class="trust-number">95%</div>
           <div class="trust-label">Completion Rate</div>
         </div>
-        <div class="trust-stat">
-          <div class="trust-number">4.8/5</div>
-          <div class="trust-label">Average Rating</div>
-        </div>
+        
       </div>
     </div>
   </div>

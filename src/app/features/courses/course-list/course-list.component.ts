@@ -10,12 +10,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
-import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, startWith } from 'rxjs/operators';
+import { Subject, combineLatest } from 'rxjs';
+import { takeUntil, debounceTime, startWith, switchMap, tap } from 'rxjs/operators';
 
-import { CourseService, Course } from '../../../shared/services/course.service';
+import { CourseService, Course, CourseFilters } from '../../../shared/services/course.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CourseCardComponent } from '../../../shared/components/course-card/course-card.component';
+import { DatabaseTestService } from '../../../shared/services/database-test.service';
 
 @Component({
   selector: 'app-course-list',
@@ -34,115 +35,14 @@ import { CourseCardComponent } from '../../../shared/components/course-card/cour
     MatSliderModule,
     CourseCardComponent
   ],
-  template: `
-    <div class="courses-page">
-      <!-- Page Header -->
-      <div class="page-header">
-        <div class="container">
-          <h1>Explore Our Courses</h1>
-          <p>Discover thousands of courses to advance your skills and career</p>
-          
-          <!-- Add Course Button for Admins -->
-          <div class="header-actions" *ngIf="authService.isAdmin()">
-            <button mat-raised-button 
-                    routerLink="/courses/add" 
-                    class="btn-gradient">
-              <mat-icon>add</mat-icon>
-              Add New Course
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Debug Info -->
-      <div class="container" style="padding: 20px; background: #f0f0f0; margin: 20px auto; border-radius: 8px;">
-        <h3>Debug Information:</h3>
-        <p><strong>Loading:</strong> {{isLoading}}</p>
-        <p><strong>Has Error:</strong> {{hasError}}</p>
-        <p><strong>Error Message:</strong> {{errorMessage}}</p>
-        <p><strong>All Courses Length:</strong> {{allCourses.length}}</p>
-        <p><strong>Filtered Courses Length:</strong> {{filteredCourses.length}}</p>
-        <p><strong>Categories Length:</strong> {{categories.length}}</p>
-        <p><strong>Current User:</strong> {{authService.getCurrentUser()?.name || 'Not logged in'}}</p>
-        
-        <button mat-button (click)="debugLoadCourses()" style="margin: 10px;">
-          🔄 Debug Load Courses
-        </button>
-        
-        <button mat-button (click)="forceShowMockData()" style="margin: 10px;">
-          🧪 Show Mock Data
-        </button>
-      </div>
-
-      <!-- Results Section -->
-      <div class="results-section">
-        <div class="container">
-          <!-- Results Header -->
-          <div class="results-header">
-            <h2>
-              <span *ngIf="!isLoading && !hasError">
-                {{filteredCourses.length}} courses found
-              </span>
-              <span *ngIf="isLoading">Loading courses...</span>
-              <span *ngIf="hasError">Error loading courses</span>
-            </h2>
-          </div>
-
-          <!-- Loading State -->
-          <div class="loading-container" *ngIf="isLoading">
-            <mat-spinner diameter="50"></mat-spinner>
-            <p>Loading courses...</p>
-          </div>
-
-          <!-- Error State -->
-          <div class="error-state" *ngIf="hasError && !isLoading">
-            <div class="error-content">
-              <mat-icon class="error-icon">error_outline</mat-icon>
-              <h3>Oops! Something went wrong</h3>
-              <p>{{errorMessage}}</p>
-              <button mat-raised-button 
-                      (click)="retryLoad()" 
-                      class="btn-gradient">
-                <mat-icon>refresh</mat-icon>
-                Try Again
-              </button>
-            </div>
-          </div>
-
-          <!-- Courses Grid -->
-          <div class="courses-grid grid grid-3" 
-               *ngIf="!isLoading && !hasError && filteredCourses.length > 0">
-            <app-course-card 
-              *ngFor="let course of filteredCourses; trackBy: trackByCourse" 
-              [course]="course"
-              [isEnrolled]="isEnrolled(course.id)"
-              class="fade-in-up">
-            </app-course-card>
-          </div>
-
-          <!-- No Results -->
-          <div class="empty-state" 
-               *ngIf="!isLoading && !hasError && filteredCourses.length === 0">
-            <mat-icon>search_off</mat-icon>
-            <h3>No courses found</h3>
-            <p>{{allCourses.length === 0 ? 'No courses available in the database' : 'Try adjusting your search criteria'}}</p>
-            <button mat-raised-button 
-                    (click)="forceShowMockData()" 
-                    class="btn-gradient">
-              <mat-icon>refresh</mat-icon>
-              Show Sample Courses
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.css']
 })
 export class CourseListComponent implements OnInit, OnDestroy {
   private courseService = inject(CourseService);
   private fb = inject(FormBuilder);
   protected authService = inject(AuthService);
+  private dbTest = inject(DatabaseTestService);
   
   private destroy$ = new Subject<void>();
 
@@ -163,6 +63,7 @@ export class CourseListComponent implements OnInit, OnDestroy {
     console.log('🚀 CourseListComponent initialized');
     this.initializeForm();
     this.loadData();
+    this.setupFilters();
   }
 
   ngOnDestroy() {
@@ -181,103 +82,137 @@ export class CourseListComponent implements OnInit, OnDestroy {
     });
   }
 
+  private setupFilters(): void {
+    // Listen to form changes and apply filters
+    this.filtersForm.valueChanges.pipe(
+      startWith(this.filtersForm.value),
+      debounceTime(300),
+      takeUntil(this.destroy$)
+    ).subscribe(filters => {
+      this.applyFilters(filters);
+    });
+  }
+
+  private applyFilters(filters: any): void {
+    if (!this.allCourses.length) return;
+
+    this.filteredCourses = this.allCourses.filter(course => {
+      // Search filter
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        const searchableText = [
+          course.title,
+          course.description,
+          course.instructor,
+          course.category,
+          ...course.tags
+        ].join(' ').toLowerCase();
+        
+        if (!searchableText.includes(searchTerm)) {
+          return false;
+        }
+      }
+
+      // Category filter
+      if (filters.category && course.category !== filters.category) {
+        return false;
+      }
+
+      // Level filter
+      if (filters.level && course.level !== filters.level) {
+        return false;
+      }
+
+      // Instructor filter
+      if (filters.instructor && course.instructor !== filters.instructor) {
+        return false;
+      }
+
+      // Price range filter
+      if (filters.minPrice !== undefined && course.price < filters.minPrice) {
+        return false;
+      }
+      if (filters.maxPrice !== undefined && course.price > filters.maxPrice) {
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log(`📊 Applied filters: ${this.filteredCourses.length} of ${this.allCourses.length} courses shown`);
+  }
+
   private loadData(): void {
     console.log('📊 Loading course data...');
     this.isLoading = true;
     this.hasError = false;
     this.errorMessage = '';
 
-    // Load courses
-    this.courseService.getAllCourses()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (courses) => {
-          console.log('✅ Courses loaded:', courses.length);
+    // First test database connectivity
+    this.dbTest.testCoursesTable()
+      .pipe(
+        tap(result => {
+          console.log('✅ Database test passed:', result);
+        }),
+        switchMap(() => this.courseService.getAllCourses()),
+        tap(courses => {
+          console.log('✅ Courses loaded successfully:', courses.length);
           this.allCourses = courses;
           this.filteredCourses = [...courses];
-          this.isLoading = false;
           this.extractInstructors();
+        }),
+        switchMap(() => this.courseService.getCategories()),
+        tap(categories => {
+          console.log('✅ Categories loaded:', categories.length);
+          this.categories = categories;
+        }),
+        switchMap(() => this.loadEnrollments()),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: () => {
+          this.isLoading = false;
+          console.log('✅ All data loaded successfully');
+          // Apply initial filters
+          this.applyFilters(this.filtersForm.value);
         },
         error: (error) => {
-          console.error('❌ Error loading courses:', error);
+          console.error('❌ Error loading data:', error);
           this.hasError = true;
-          this.errorMessage = 'Failed to load courses. Please try again.';
+          this.errorMessage = 'Failed to load courses. Please check your database connection.';
           this.isLoading = false;
         }
       });
-
-    // Load categories
-    this.courseService.getCategories()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (categories) => {
-          console.log('✅ Categories loaded:', categories);
-          this.categories = categories;
-        },
-        error: (error) => {
-          console.error('❌ Error loading categories:', error);
-          this.categories = ['Programming', 'Design', 'Business', 'Marketing'];
-        }
-      });
-
-    // Load enrollments if student
-    this.loadEnrollments();
   }
 
-  private loadEnrollments(): void {
+  private loadEnrollments() {
     if (this.authService.isStudent()) {
-      this.authService.getEnrolledCourses()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (courseIds) => {
-            console.log('✅ Enrollments loaded:', courseIds);
-            this.enrolledCourseIds = courseIds;
-          },
-          error: (error) => {
-            console.error('❌ Error loading enrollments:', error);
-            this.enrolledCourseIds = [];
-          }
-        });
+      return this.authService.getEnrolledCourses().pipe(
+        tap(courseIds => {
+          console.log('✅ Enrollments loaded:', courseIds.length);
+          this.enrolledCourseIds = courseIds;
+        })
+      );
     }
+    return new Subject().asObservable(); // Return empty observable if not student
   }
 
   private extractInstructors(): void {
     const instructorSet = new Set(this.allCourses.map(course => course.instructor));
     this.instructors = Array.from(instructorSet).sort();
+    console.log('✅ Instructors extracted:', this.instructors.length);
   }
 
-  // Debug methods
-  debugLoadCourses(): void {
-    console.log('🔧 Debug: Manual course load triggered');
-    this.loadData();
-  }
-
-  forceShowMockData(): void {
-    console.log('🧪 Debug: Forcing mock data display');
-    this.isLoading = false;
-    this.hasError = false;
-    this.allCourses = [
-      {
-        id: 'mock-1',
-        title: 'Mock JavaScript Course',
-        description: 'This is a mock course for testing purposes.',
-        instructor: 'Test Instructor',
-        duration: '8 weeks',
-        category: 'Programming',
-        level: 'Beginner',
-        price: 99.99,
-        rating: 4.5,
-        studentsEnrolled: 100,
-        image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop',
-        syllabus: ['Introduction', 'Basics', 'Advanced Topics'],
-        prerequisites: ['None'],
-        tags: ['JavaScript', 'Programming'],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isPublished: true
-      }
-    ];
-    this.filteredCourses = [...this.allCourses];
+  clearFilters(): void {
+    console.log('🧹 Clearing all filters');
+    this.filtersForm.reset({
+      search: '',
+      category: '',
+      level: '',
+      instructor: '',
+      minPrice: 0,
+      maxPrice: 500
+    });
   }
 
   isEnrolled(courseId: string): boolean {
@@ -291,5 +226,54 @@ export class CourseListComponent implements OnInit, OnDestroy {
 
   trackByCourse(index: number, course: Course): string {
     return course.id;
+  }
+
+  // Debug methods (can be removed in production)
+  debugLoadCourses(): void {
+    console.log('🔧 Debug: Manual course load triggered');
+    this.loadData();
+  }
+
+  testDatabaseConnection(): void {
+    console.log('🔧 Debug: Testing database connection');
+    this.dbTest.getAllTables().subscribe({
+      next: (result) => {
+        console.log('✅ Database test results:', result);
+        alert('Database test completed. Check console for details.');
+      },
+      error: (error) => {
+        console.error('❌ Database test failed:', error);
+        alert('Database test failed. Check console for details.');
+      }
+    });
+  }
+
+  forceShowMockData(): void {
+    console.log('🧪 Debug: Forcing mock data display');
+    this.isLoading = false;
+    this.hasError = false;
+    this.allCourses = [
+      {
+        id: 'mock-1',
+        title: 'Mock JavaScript Course',
+        description: 'This is a mock course for testing purposes. Learn JavaScript from basics to advanced concepts.',
+        instructor: 'Test Instructor',
+        duration: '8 weeks',
+        category: 'Programming',
+        level: 'Beginner',
+        price: 99.99,
+        rating: 4.5,
+        studentsEnrolled: 100,
+        image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop',
+        syllabus: ['Introduction to JavaScript', 'Variables and Functions', 'DOM Manipulation', 'Advanced Concepts'],
+        prerequisites: ['Basic HTML knowledge', 'Computer literacy'],
+        tags: ['JavaScript', 'Programming', 'Web Development'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublished: true
+      }
+    ];
+    this.filteredCourses = [...this.allCourses];
+    this.extractInstructors();
   }
 }

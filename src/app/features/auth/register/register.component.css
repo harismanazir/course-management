@@ -1,45 +1,31 @@
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--success-gradient), var(--primary-gradient));
+  background: #0f172a;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   position: relative;
-  overflow: hidden;
-}
-
-.register-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="30" cy="30" r="2"/></g></g></svg>');
-  opacity: 0.3;
 }
 
 .register-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  gap: 40px;
-  position: relative;
-  z-index: 1;
+  max-width: 500px;
 }
 
 /* Form Container */
 .form-container {
-  background: var(--background-white);
+  background: #1f2937;
   border-radius: 20px;
   padding: 40px;
   box-shadow: var(--shadow-large);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   max-height: 90vh;
   overflow-y: auto;
+  width: 100%;
 }
 
 .form-header {
@@ -50,12 +36,12 @@
 .form-header h2 {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: white;
   margin-bottom: 8px;
 }
 
 .form-header p {
-  color: var(--text-medium);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1rem;
 }
 
@@ -70,10 +56,130 @@
   width: 100%;
 }
 
+/* Form group styling to match login */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.modern-input {
+  width: 100%;
+}
+
+/* Dark theme form field styling - exactly like login */
+.form-container .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  border-radius: var(--radius-lg) !important;
+  background: #374151 !important;
+  border: 2px solid #4B5563 !important;
+  transition: all var(--transition-normal) !important;
+}
+
+.form-container .mat-mdc-form-field .mat-mdc-form-field-infix {
+  background-color: transparent !important;
+}
+
+.form-container .mat-mdc-form-field input {
+  color: white !important;
+  caret-color: var(--primary-color) !important;
+  background-color: transparent !important;
+}
+
+.form-container .mat-mdc-form-field input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-container .mat-mdc-form-field .mat-mdc-floating-label {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: var(--primary-color) !important;
+}
+
+.form-container .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  border-color: var(--primary-color) !important;
+}
+
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+}
+
+.form-container .mat-mdc-form-field .mat-mdc-notch-outline {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-notch-outline {
+  border-color: var(--primary-color) !important;
+}
+
+.form-container .mat-mdc-form-field .mat-mdc-notch-outline .mat-mdc-form-field-outline-start,
+.form-container .mat-mdc-form-field .mat-mdc-notch-outline .mat-mdc-form-field-outline-notch,
+.form-container .mat-mdc-form-field .mat-mdc-notch-outline .mat-mdc-form-field-outline-end {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-notch-outline .mat-mdc-form-field-outline-start,
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-notch-outline .mat-mdc-form-field-outline-notch,
+.form-container .mat-mdc-form-field.mat-focused .mat-mdc-notch-outline .mat-mdc-form-field-outline-end {
+  border-color: var(--primary-color) !important;
+}
+
+.form-container .mat-mdc-form-field:hover .mat-mdc-notch-outline .mat-mdc-form-field-outline-start,
+.form-container .mat-mdc-form-field:hover .mat-mdc-notch-outline .mat-mdc-form-field-outline-notch,
+.form-container .mat-mdc-form-field:hover .mat-mdc-notch-outline .mat-mdc-form-field-outline-end {
+  border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.form-container .mat-mdc-form-field .mat-icon {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Select field styling to match login */
+.form-container .mat-mdc-select {
+  color: white !important;
+}
+
+.form-container .mat-mdc-select .mat-mdc-select-trigger {
+  color: white !important;
+  background-color: transparent !important;
+}
+
+.form-container .mat-mdc-select-value {
+  color: white !important;
+}
+
+.form-container .mat-mdc-select-placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.form-container .mat-mdc-select-arrow {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Password toggle button styling - exactly like login */
+.form-container button[mat-icon-button] {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.form-container button[mat-icon-button]:hover {
+  color: var(--primary-color) !important;
+  background: rgba(79, 70, 229, 0.1) !important;
+}
+
 .role-option {
   display: flex;
   align-items: center;
   gap: 12px;
+  color: white !important;
 }
 
 .role-option mat-icon {
@@ -94,7 +200,7 @@
 .strength-bar {
   flex: 1;
   height: 4px;
-  background: var(--border-color);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -119,24 +225,28 @@
 
 .terms-checkbox {
   font-size: 0.875rem;
-  color: var(--text-medium);
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.terms-checkbox .mat-mdc-checkbox-label {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .terms-link {
-  color: var(--primary-color);
+  color: #A5B4FC;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .terms-link:hover {
-  color: var(--secondary-color);
+  color: white;
   text-decoration: underline;
 }
 
 .terms-error {
   display: block;
-  color: var(--error-color);
+  color: #EF4444;
   font-size: 0.75rem;
   margin-top: 8px;
 }
@@ -153,6 +263,8 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.3s ease;
+  background: var(--primary-gradient) !important;
+  color: white !important;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -171,166 +283,45 @@
 }
 
 .form-footer p {
-  color: var(--text-medium);
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
 }
 
 .login-link {
-  color: var(--primary-color);
+  color: #A5B4FC;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .login-link:hover {
-  color: var(--secondary-color);
+  color: white;
   text-decoration: underline;
 }
 
-/* Benefits Panel */
-.benefits-panel {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 40px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-height: 90vh;
-  overflow-y: auto;
+/* Password toggle button styling */
+.form-container button[mat-icon-button] {
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.benefits-content {
-  width: 100%;
-}
-
-.benefits-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.benefits-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--success-color);
-  margin-bottom: 16px;
-}
-
-.benefits-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  margin: 0;
-}
-
-.benefits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.benefit-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.benefit-item mat-icon {
-  color: var(--primary-color);
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-  margin-top: 2px;
-}
-
-.benefit-text h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin: 0 0 4px 0;
-}
-
-.benefit-text p {
-  color: var(--text-medium);
-  font-size: 0.875rem;
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Testimonial */
-.testimonial {
-  padding: 24px;
-  background: var(--background-light);
-  border-radius: 12px;
-  border-left: 4px solid var(--success-color);
-}
-
-.testimonial-content p {
-  font-style: italic;
-  color: var(--text-medium);
-  margin: 0 0 16px 0;
-  line-height: 1.6;
-}
-
-.testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.testimonial-author img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.author-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.author-name {
-  font-weight: 600;
-  color: var(--text-dark);
-  font-size: 0.875rem;
-}
-
-.author-title {
-  color: var(--text-light);
-  font-size: 0.75rem;
+.form-container button[mat-icon-button]:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--primary-color) !important;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .register-container {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    max-width: 400px;
   }
 
-  .form-container,
-  .benefits-panel {
-    padding: 24px;
+  .form-container {
+    padding: 32px;
     max-height: none;
   }
 
   .form-header h2 {
     font-size: 1.75rem;
-  }
-
-  .benefits-list {
-    gap: 20px;
-  }
-
-  .benefit-item {
-    gap: 12px;
-  }
-
-  .benefits-header {
-    margin-bottom: 24px;
   }
 }
 
@@ -339,9 +330,8 @@
     padding: 16px;
   }
 
-  .form-container,
-  .benefits-panel {
-    padding: 20px;
+  .form-container {
+    padding: 24px;
     border-radius: 16px;
   }
 
@@ -361,24 +351,6 @@
 
   .strength-bar {
     width: 100%;
-  }
-
-  .benefits-list {
-    gap: 16px;
-  }
-
-  .benefit-item {
-    gap: 10px;
-  }
-
-  .benefit-item mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-  }
-
-  .testimonial {
-    padding: 16px;
   }
 }
 
@@ -417,45 +389,16 @@
 }
 
 .form-container::-webkit-scrollbar-track {
-  background: var(--background-light);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .form-container::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
 .form-container::-webkit-scrollbar-thumb:hover {
-  background: var(--text-light);
-}
-
-.benefits-panel::-webkit-scrollbar {
-  width: 6px;
-}
-
-.benefits-panel::-webkit-scrollbar-track {
-  background: var(--background-light);
-}
-
-.benefits-panel::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.benefits-panel::-webkit-scrollbar-thumb:hover {
-  background: var(--text-light);
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .form-container,
-  .benefits-panel {
-    border: 2px solid;
-  }
-  
-  .strength-bar {
-    border: 1px solid;
-  }
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* Password strength specific colors */
@@ -477,6 +420,12 @@
 /* Role selection styling */
 .mat-mdc-select-panel .mat-mdc-option {
   padding: 12px 16px;
+  background: #374151 !important;
+  color: white !important;
+}
+
+.mat-mdc-select-panel .mat-mdc-option:hover {
+  background: #4b5563 !important;
 }
 
 .role-option {
@@ -490,31 +439,4 @@
 
 .terms-checkbox .mdc-checkbox {
   margin-top: 2px;
-}
-
-/* Benefits panel hover effects */
-.benefit-item {
-  transition: all 0.3s ease;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.benefit-item:hover {
-  background: rgba(102, 126, 234, 0.05);
-  transform: translateX(4px);
-}
-
-.benefit-item:hover mat-icon {
-  transform: scale(1.1);
-  color: var(--secondary-color);
-}
-
-/* Testimonial animations */
-.testimonial {
-  transition: all 0.3s ease;
-}
-
-.testimonial:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
 }

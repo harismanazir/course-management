@@ -48,24 +48,8 @@ export class CourseService {
     return from(
       this.supabase.from('courses')
         .select(`
-          id,
-          title,
-          description,
-          instructor,
-          duration,
-          category_id,
-          level,
-          price,
-          rating,
-          students_enrolled,
-          image,
-          syllabus,
-          prerequisites,
-          tags,
-          is_published,
-          created_at,
-          updated_at,
-          categories!inner(name)
+          *,
+          categories(name)
         `)
         .eq('is_published', true)
         .order('created_at', { ascending: false })
@@ -73,7 +57,7 @@ export class CourseService {
       map(({ data, error }) => {
         if (error) {
           console.error('❌ Error fetching courses:', error);
-          return [];
+          throw error;
         }
         
         console.log('✅ Raw courses from database:', data?.length || 0);
@@ -141,24 +125,8 @@ export class CourseService {
     return from(
       this.supabase.from('courses')
         .select(`
-          id,
-          title,
-          description,
-          instructor,
-          duration,
-          category_id,
-          level,
-          price,
-          rating,
-          students_enrolled,
-          image,
-          syllabus,
-          prerequisites,
-          tags,
-          is_published,
-          created_at,
-          updated_at,
-          categories!inner(name)
+          *,
+          categories(name)
         `)
         .eq('id', id)
         .single()
@@ -220,24 +188,8 @@ export class CourseService {
           this.supabase.from('courses')
             .insert(insertData)
             .select(`
-              id,
-              title,
-              description,
-              instructor,
-              duration,
-              category_id,
-              level,
-              price,
-              rating,
-              students_enrolled,
-              image,
-              syllabus,
-              prerequisites,
-              tags,
-              is_published,
-              created_at,
-              updated_at,
-              categories!inner(name)
+              *,
+              categories(name)
             `)
             .single()
         );
@@ -306,24 +258,8 @@ export class CourseService {
               .update(updateData)
               .eq('id', id)
               .select(`
-                id,
-                title,
-                description,
-                instructor,
-                duration,
-                category_id,
-                level,
-                price,
-                rating,
-                students_enrolled,
-                image,
-                syllabus,
-                prerequisites,
-                tags,
-                is_published,
-                created_at,
-                updated_at,
-                categories!inner(name)
+                *,
+                categories(name)
               `)
               .single()
           );
@@ -347,24 +283,8 @@ export class CourseService {
           })
           .eq('id', id)
           .select(`
-            id,
-            title,
-            description,
-            instructor,
-            duration,
-            category_id,
-            level,
-            price,
-            rating,
-            students_enrolled,
-            image,
-            syllabus,
-            prerequisites,
-            tags,
-            is_published,
-            created_at,
-            updated_at,
-            categories!inner(name)
+            *,
+            categories(name)
           `)
           .single()
       );
@@ -474,24 +394,8 @@ export class CourseService {
     return from(
       this.supabase.from('courses')
         .select(`
-          id,
-          title,
-          description,
-          instructor,
-          duration,
-          category_id,
-          level,
-          price,
-          rating,
-          students_enrolled,
-          image,
-          syllabus,
-          prerequisites,
-          tags,
-          is_published,
-          created_at,
-          updated_at,
-          categories!inner(name)
+          *,
+          categories(name)
         `)
         .eq('is_published', true)
         .order('rating', { ascending: false })
@@ -518,24 +422,8 @@ export class CourseService {
     return from(
       this.supabase.from('courses')
         .select(`
-          id,
-          title,
-          description,
-          instructor,
-          duration,
-          category_id,
-          level,
-          price,
-          rating,
-          students_enrolled,
-          image,
-          syllabus,
-          prerequisites,
-          tags,
-          is_published,
-          created_at,
-          updated_at,
-          categories!inner(name)
+          *,
+          categories(name)
         `)
         .eq('is_published', true)
         .order('students_enrolled', { ascending: false })
@@ -567,24 +455,8 @@ export class CourseService {
     return from(
       this.supabase.from('courses')
         .select(`
-          id,
-          title,
-          description,
-          instructor,
-          duration,
-          category_id,
-          level,
-          price,
-          rating,
-          students_enrolled,
-          image,
-          syllabus,
-          prerequisites,
-          tags,
-          is_published,
-          created_at,
-          updated_at,
-          categories!inner(name)
+          *,
+          categories(name)
         `)
         .in('id', ids)
         .eq('is_published', true)
@@ -676,17 +548,30 @@ export class CourseService {
       rating: dbCourse.rating || 4.5,
       studentsEnrolled: dbCourse.students_enrolled || 0,
       image: dbCourse.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop',
-      syllabus: Array.isArray(dbCourse.syllabus) ? dbCourse.syllabus : 
-                (typeof dbCourse.syllabus === 'string' ? JSON.parse(dbCourse.syllabus || '[]') : []),
-      prerequisites: Array.isArray(dbCourse.prerequisites) ? dbCourse.prerequisites : 
-                     (typeof dbCourse.prerequisites === 'string' ? JSON.parse(dbCourse.prerequisites || '[]') : []),
-      tags: Array.isArray(dbCourse.tags) ? dbCourse.tags : 
-            (typeof dbCourse.tags === 'string' ? JSON.parse(dbCourse.tags || '[]') : []),
+      syllabus: this.parseJsonArray(dbCourse.syllabus),
+      prerequisites: this.parseJsonArray(dbCourse.prerequisites),
+      tags: this.parseJsonArray(dbCourse.tags),
       createdAt: new Date(dbCourse.created_at),
       updatedAt: new Date(dbCourse.updated_at || dbCourse.created_at),
       isPublished: dbCourse.is_published || false
     };
     
     return course;
+  }
+
+  private parseJsonArray(field: any): string[] {
+    if (Array.isArray(field)) {
+      return field;
+    }
+    if (typeof field === 'string') {
+      try {
+        const parsed = JSON.parse(field);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.warn('Failed to parse JSON array:', field);
+        return [];
+      }
+    }
+    return [];
   }
 }

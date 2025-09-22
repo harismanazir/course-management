@@ -4,7 +4,7 @@
 }
 
 .dashboard-header {
-  background: var(--primary-gradient);
+  background: #1f2937;
   color: white;
   padding: 40px 0;
   position: relative;
@@ -150,7 +150,7 @@
 }
 
 .dashboard-tabs {
-  background: var(--background-white);
+  background: #1f2937;
   border-radius: 12px;
   box-shadow: var(--shadow-soft);
   overflow: hidden;
@@ -163,6 +163,56 @@
   font-weight: 500;
   min-height: 60px;
   padding: 0 24px;
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab-label .mat-mdc-tab-label-content {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab-label mat-icon {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab-label.mdc-tab--active {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab-label.mdc-tab--active .mat-mdc-tab-label-content {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab-label.mdc-tab--active mat-icon {
+  color: white !important;
+}
+
+/* Target the specific MDC tab text label */
+.dashboard-tabs .mdc-tab__text-label {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab .mdc-tab__text-label {
+  color: white !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dashboard-tabs .mat-mdc-tab-label .mdc-tab__text-label {
+  color: white !important;
+}
+
+/* Override Material Design's specific selector */
+.dashboard-tabs .mat-mdc-tab .mdc-tab__text-label {
+  color: white !important;
+}
+
+/* Ensure all nested text elements are white */
+.dashboard-tabs .mat-mdc-tab-label * {
+  color: white !important;
+}
+
+.dashboard-tabs .mat-mdc-tab * {
+  color: white !important;
 }
 
 .tab-badge {
@@ -530,5 +580,9 @@
 
   .achievements-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tab-content {
+    padding: 16px;
   }
 }

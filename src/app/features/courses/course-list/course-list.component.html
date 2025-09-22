@@ -66,26 +66,28 @@
             </mat-form-field>
           </div>
 
-          <!-- Price Range -->
-          <div class="price-filter">
-            <label>Price Range: ${{filtersForm.get('minPrice')?.value || 0}} - ${{filtersForm.get('maxPrice')?.value || 500}}</label>
-            <div class="price-sliders">
-              <mat-slider min="0" max="500" step="10" discrete>
-                <input matSliderStartThumb formControlName="minPrice">
-                <input matSliderEndThumb formControlName="maxPrice">
-              </mat-slider>
+          <!-- Price Range and Clear Filters in same line -->
+          <div class="price-and-actions">
+            <div class="price-filter">
+              <label>Price Range: ${{filtersForm.get('minPrice')?.value || 0}} - ${{filtersForm.get('maxPrice')?.value || 500}}</label>
+              <div class="price-sliders">
+                <mat-slider min="0" max="500" step="10" discrete>
+                  <input matSliderStartThumb formControlName="minPrice">
+                  <input matSliderEndThumb formControlName="maxPrice">
+                </mat-slider>
+              </div>
             </div>
-          </div>
 
-          <!-- Clear Filters Button -->
-          <div class="filter-actions">
-            <button mat-button 
-                    type="button"
-                    (click)="clearFilters()"
-                    class="clear-filters-btn">
-              <mat-icon>clear</mat-icon>
-              Clear Filters
-            </button>
+            <!-- Clear Filters Button -->
+            <div class="filter-actions">
+              <button mat-button 
+                      type="button"
+                      (click)="clearFilters()"
+                      class="clear-filters-btn">
+                <mat-icon>clear</mat-icon>
+                Clear Filters
+              </button>
+            </div>
           </div>
         </form>
       </mat-card>

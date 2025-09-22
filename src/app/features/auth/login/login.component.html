@@ -1,26 +1,5 @@
 <div class="login-page">
-  <!-- Background Elements -->
-  <div class="login-background">
-    <div class="background-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-    </div>
-    <div class="background-pattern"></div>
-  </div>
-
   <div class="login-container">
-    <!-- Brand Section -->
-    <div class="brand-section">
-      <div class="brand-content">
-        <div class="brand-logo">
-          <mat-icon>school</mat-icon>
-        </div>
-        <h1 class="brand-title">CourseHub</h1>
-        <p class="brand-subtitle">Transform your future with expert-led learning</p>
-      </div>
-    </div>
-
     <!-- Login Form Section -->
     <div class="form-section">
       <div class="form-container">
@@ -98,39 +77,6 @@
             <span>{{isLoading ? 'Signing In...' : 'Sign In'}}</span>
           </button>
 
-          <!-- Divider -->
-          <div class="divider">
-            <span class="divider-text">or continue with</span>
-          </div>
-
-          <!-- Demo Accounts Section -->
-          <div class="demo-section">
-            <h3 class="demo-title">Try Demo Accounts</h3>
-            <p class="demo-description">Quick access to explore the platform</p>
-            
-            <div class="demo-accounts">
-              <button 
-                type="button"
-                mat-stroked-button 
-                *ngFor="let account of demoAccounts"
-                (click)="useDemoAccount(account.email, account.password)"
-                class="demo-btn"
-                [class]="'demo-' + account.role.toLowerCase()"
-                [disabled]="isLoading">
-                <div class="demo-btn-content">
-                  <div class="demo-icon">
-                    <mat-icon>{{account.role === 'Admin' ? 'admin_panel_settings' : 'school'}}</mat-icon>
-                  </div>
-                  <div class="demo-info">
-                    <span class="demo-role">{{account.role}} Demo</span>
-                    <span class="demo-email">{{account.email}}</span>
-                  </div>
-                  <mat-icon class="demo-arrow">arrow_forward</mat-icon>
-                </div>
-              </button>
-            </div>
-          </div>
-
           <!-- Register Link -->
           <div class="form-footer">
             <p class="signup-text">
@@ -139,96 +85,6 @@
             </p>
           </div>
         </form>
-      </div>
-    </div>
-
-    <!-- Features Section -->
-    <div class="features-section">
-      <div class="features-content">
-        <div class="features-header">
-          <div class="features-icon">
-            <mat-icon>workspace_premium</mat-icon>
-          </div>
-          <h3>Why Choose CourseHub?</h3>
-          <p>Join thousands of learners advancing their careers</p>
-        </div>
-        
-        <div class="features-list">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <mat-icon>school</mat-icon>
-            </div>
-            <div class="feature-text">
-              <h4>Expert Instructors</h4>
-              <p>Learn from industry professionals with real-world experience</p>
-            </div>
-          </div>
-          
-          <div class="feature-item">
-            <div class="feature-icon">
-              <mat-icon>schedule_flexible</mat-icon>
-            </div>
-            <div class="feature-text">
-              <h4>Flexible Learning</h4>
-              <p>Study at your own pace, on your own schedule</p>
-            </div>
-          </div>
-          
-          <div class="feature-item">
-            <div class="feature-icon">
-              <mat-icon>verified</mat-icon>
-            </div>
-            <div class="feature-text">
-              <h4>Certificates</h4>
-              <p>Earn industry-recognized credentials upon completion</p>
-            </div>
-          </div>
-          
-          <div class="feature-item">
-            <div class="feature-icon">
-              <mat-icon>support_agent</mat-icon>
-            </div>
-            <div class="feature-text">
-              <h4>24/7 Support</h4>
-              <p>Get help whenever you need it from our support team</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-section">
-          <div class="stat-item">
-            <div class="stat-number">50K+</div>
-            <div class="stat-label">Students</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">1000+</div>
-            <div class="stat-label">Courses</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">4.8/5</div>
-            <div class="stat-label">Rating</div>
-          </div>
-        </div>
-
-        <!-- Testimonial -->
-        <div class="testimonial">
-          <div class="testimonial-content">
-            <div class="testimonial-quote">
-              <mat-icon>format_quote</mat-icon>
-            </div>
-            <p>"CourseHub transformed my career. The quality of courses and instructors is outstanding!"</p>
-            <div class="testimonial-author">
-              <div class="author-avatar">
-                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="Sarah M.">
-              </div>
-              <div class="author-info">
-                <span class="author-name">Sarah M.</span>
-                <span class="author-title">Software Engineer</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
