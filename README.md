@@ -51,7 +51,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone <repository-url>
-cd course-commons
+cd course-management
 ```
 
 ### 2. Install Dependencies
